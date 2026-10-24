@@ -34,19 +34,19 @@ key; build those features behind the demo fallback and continue.
 
 ## M1 — Map + places
 
-- [ ] 10. Implement `lib/geo` (haversine, geofence, roundCoord, estimateSteps,
+- [x] 10. Implement `lib/geo` (haversine, geofence, roundCoord, estimateSteps,
   routeDistance) with vitest tests. _(REQ-3.6, REQ-7.2, REQ-11.2)_
-- [ ] 11. Create `data/seed/boston-places.*` from OSM categories with ODbL
+- [x] 11. Create `data/seed/boston-places.*` from OSM categories with ODbL
   attribution noted; load into the demo store. _(REQ-15.1)_
-- [ ] 12. Build the react-leaflet map with OSM tiles and always-visible
+- [x] 12. Build the react-leaflet map with OSM tiles and always-visible
   attribution. _(REQ-2.1)_
-- [ ] 13. Add live position via `watchPosition`; handle denied permission with a
+- [x] 13. Add live position via `watchPosition`; handle denied permission with a
   default Boston center and a non-blocking message. _(REQ-2.2, REQ-2.5)_
-- [ ] 14. Render pixel-styled rarity-colored place markers from the store.
+- [x] 14. Render pixel-styled rarity-colored place markers from the store.
   _(REQ-2.3)_
-- [ ] 15. Build the place detail sheet (name, category, neighborhood, rarity,
+- [x] 15. Build the place detail sheet (name, category, neighborhood, rarity,
   collect count). _(REQ-2.4)_
-- [ ] 16. Verify map at 375×812, clean console; commit `M1: map with live position
+- [x] 16. Verify map at 375×812, clean console; commit `M1: map with live position
   and seeded Boston places`.
 
 ## M2 — Check-in + photo + AI card

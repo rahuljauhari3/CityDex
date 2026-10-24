@@ -74,6 +74,11 @@ export interface Place {
   createdBy: string | null;
   firstCollectedAt: string | null;
   collectCount: number;
+  /**
+   * Baseline/suggested rarity used to color the place's map marker (REQ-2.3).
+   * Per-user stamp rarity is adjusted server-side at check-in (design.md §7).
+   */
+  baselineRarity: Rarity;
 }
 
 export interface Route {
@@ -201,6 +206,7 @@ export interface CreatePlaceInput {
   category: PlaceCategory;
   source: "seed" | "user";
   createdBy?: string | null;
+  baselineRarity?: Rarity;
 }
 
 export interface CreateStampInput {

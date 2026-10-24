@@ -8,6 +8,7 @@
  * runs.
  */
 
+import { getSeedPlaces } from "@/data/seed/places";
 import type { Store } from "./store";
 import type {
   Badge,
@@ -56,6 +57,19 @@ const db: MemoryDb = {
   userBadges: new Set(),
 };
 
+/**
+ * Seed the curated Boston/Cambridge places once per process (REQ-15.1). Idempotent:
+ * safe to call on every store access; it only fills the map the first time.
+ */
+let seeded = false;
+function ensureSeeded(): void {
+  if (seeded) return;
+  seeded = true;
+  for (const place of getSeedPlaces()) {
+    db.places.set(place.id, place);
+  }
+}
+
 function inBbox(place: Place, bbox: BoundingBox): boolean {
   return (
     place.lat >= bbox.minLat &&
@@ -67,15 +81,18 @@ function inBbox(place: Place, bbox: BoundingBox): boolean {
 
 export const memoryStore: Store = {
   async getPlaces(bbox) {
+    ensureSeeded();
     const all = [...db.places.values()];
     return bbox ? all.filter((p) => inBbox(p, bbox)) : all;
   },
 
   async getPlace(placeId) {
+    ensureSeeded();
     return db.places.get(placeId) ?? null;
   },
 
   async createPlace(input: CreatePlaceInput) {
+    ensureSeeded();
     const place: Place = {
       id: id("place"),
       name: input.name,
@@ -87,6 +104,7 @@ export const memoryStore: Store = {
       createdBy: input.createdBy ?? null,
       firstCollectedAt: null,
       collectCount: 0,
+      baselineRarity: input.baselineRarity ?? "common",
     };
     db.places.set(place.id, place);
     return place;
@@ -114,6 +132,7 @@ export const memoryStore: Store = {
   },
 
   async getDexForUser(userId, nearbyPlaceIds) {
+    ensureSeeded();
     const owned = new Map(
       [...db.stamps.values()]
         .filter((s) => s.userId === userId)

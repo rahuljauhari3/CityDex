@@ -1,10 +1,10 @@
-import { PlaceholderScreen } from "@/components/ui/PixelPanel";
+import type { Metadata } from "next";
+import { MapScreen } from "@/components/map/MapScreen";
+
+export const metadata: Metadata = {
+  title: "Map · CityDex",
+};
 
 export default function MapPage() {
-  return (
-    <PlaceholderScreen
-      title="Map"
-      blurb="Your city, your pins. The Leaflet map and seeded Boston places arrive in M1."
-    />
-  );
+  return <MapScreen />;
 }

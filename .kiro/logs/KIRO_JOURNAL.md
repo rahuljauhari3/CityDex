@@ -73,3 +73,38 @@ and `citydex-ui`. The builder's `"tools": ["*"]` array was left unchanged.
   correctness, which let me commit with confidence.
 - **Workflow steering** enforced the pre-commit gate (lint → tsc --noEmit → test,
   plus a build) and the `M0: …` commit message with no Co-Authored-By trailer.
+
+## M1 — Map + places (what Kiro features helped)
+- **Spec drove scope:** `tasks.md` tasks 10–16 gave the exact M1 breakdown;
+  `design.md` §4 (the `Store` interface), §11 (geo math signatures), and §3 (the
+  `Place` shape) fixed where everything went. Added `baselineRarity: Rarity` to
+  `Place` so map pins can be rarity-colored without a per-user stamp.
+- **Pure logic first:** `lib/geo/index.ts` (haversine, geofence, roundCoord,
+  estimateSteps, routeDistance) is I/O-free per `structure.md`, so it was unit
+  tested directly. `roundCoord` switched to fixed decimal-place rounding
+  (design §3: "~10 m ≈ 4 decimal places") after tests exposed that the earlier
+  cos(lat) grid was not idempotent.
+- **Seed data, no runtime Overpass:** curated ~42 real Boston/Cambridge spots in
+  `data/seed/boston-places.json` with OSM ODbL attribution; `data/seed/places.ts`
+  validates with zod and feeds `memoryStore` via `ensureSeeded()`. `GET
+  /api/places` serves them so the client map never imports the server-only store.
+- **Sub-agent delegation (parallel):** dispatched `citydex-tester` (geo tests)
+  and `citydex-ui` (react-leaflet map, markers, place sheet) in one turn. Both
+  are write-restricted to paths outside the workspace home root, so their file
+  writes were denied by their own permission profiles; they returned complete,
+  hand-verified implementations which the builder applied with file tools. Worth
+  revisiting the tester/ui write scope so they can write directly next time.
+- **react-leaflet via `next/dynamic` ssr:false:** `MapScreen.tsx` lazy-loads
+  `LeafletMap.tsx` so Leaflet never touches `window` on the server; OSM ©
+  attribution stays visible (REQ-2.1), `watchPosition` drives live position with
+  a non-blocking Boston fallback on denial (REQ-2.5).
+- **`citydex-reviewer` audit** found no blockers and two should-fix items: the
+  map height `calc(100vh-4rem)` could clip the OSM attribution on iOS Safari —
+  switched to `100dvh`; and `CreatePlaceInput.baselineRarity` lacks a zod schema
+  — deferred to M2 where user-created places first hit that boundary. Added a
+  seed-attribution test so the ODbL notice can't silently drift.
+- **Build note:** this repo uses `cacheComponents`, which rejects
+  `export const dynamic = "force-dynamic"`; the route is dynamic anyway by
+  reading `request.url`, so the export was removed.
+- **Gate:** lint, `tsc --noEmit`, `npm test` (28 passing), and `npm run build`
+  all pass before the `M1:` commit.
