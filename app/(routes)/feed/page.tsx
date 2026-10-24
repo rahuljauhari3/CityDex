@@ -132,7 +132,7 @@ function StampFeedCard({ it }: { it: Awaited<ReturnType<typeof getFeed>>[number]
         <div className="h-12 w-12 shrink-0 overflow-hidden border-4" style={{ borderColor: rarityHex(it.rarity), background: "rgba(91,58,41,0.1)" }}>
           {it.photoPath ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={it.photoPath} alt="" className="h-full w-full object-cover" />
+            <img src={it.photoPath} alt="" title={it.photoCredit ? `Photo: ${it.photoCredit.author}, ${it.photoCredit.license}` : undefined} className="h-full w-full object-cover" />
           ) : (
             <span aria-hidden="true" className="flex h-full items-center justify-center font-heading text-wood-dark/50">★</span>
           )}

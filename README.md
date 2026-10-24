@@ -139,9 +139,16 @@ tests/             # vitest unit tests
   Plymouth Rock and Race Point to Walden Pond, Salem, Lowell, Worcester,
   Springfield, MASS MoCA and Mount Greylock (the only legendary). Coordinates
   are approximate.
-- Demo stamp photos: original pixel-style illustrations generated in
-  `lib/demo/photos.ts`, plus one real photo of Gasson Hall at Boston College
-  (`public/demo/gasson-hall.jpg`) taken by the team, with no location metadata.
+- Place photos: 41 freely licensed photos from Wikimedia Commons (CC BY,
+  CC BY-SA, CC0, public domain), the lead images of each place's Wikipedia
+  article, reviewed by hand. They're used on seeded demo stamps and place cards,
+  with the author and license shown in the Dex and on `/credits`. The metadata
+  is in `data/seed/place-photos.json`; regenerate it with
+  `node scripts/fetch-place-photos.mjs`. Images load from Wikimedia at runtime.
+- Gasson Hall photo: taken by the CityDex team at Boston College
+  (`public/demo/gasson-hall.jpg`), with no location metadata.
+- Places with no free photo use original pixel-style illustrations from
+  `lib/demo/photos.ts`.
 - County baseline: CDC, *PLACES: Local Data for Better Health, County Data,
   2025 release* (data.cdc.gov dataset `swc5-untb`), Suffolk County, MA, crude
   prevalence among adults. Bundled in `data/cdc-places-suffolk.json`.

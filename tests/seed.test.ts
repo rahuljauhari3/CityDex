@@ -45,16 +45,22 @@ import { buildDemoWorld } from "@/lib/demo/seed";
 
 describe("demo photos", () => {
   it("uses the real Gasson Hall photo and original illustrations elsewhere", () => {
-    expect(demoPhotoFor({ id: "seed_bc_gasson_hall", name: "Gasson Hall", category: "building" })).toBe("/demo/gasson-hall.jpg");
+    expect(demoPhotoFor({ id: "seed_bc_gasson_hall", name: "Gasson Hall", category: "building" }).url).toBe("/demo/gasson-hall.jpg");
+    const walden = demoPhotoFor({ id: "seed_walden_pond", name: "Walden Pond", category: "water" });
+    expect(walden.url).toMatch(/^https:\/\/(upload|thumb)\.wikimedia\.org\//);
+    expect(walden.credit?.license).toMatch(/CC|Public domain/i);
+    // Places without a free photo fall back to an illustration with no credit.
+    expect(demoPhotoFor({ id: "seed_underground_ink_block", name: "Ink Block", category: "mural" }).credit).toBeNull();
     const svg = demoIllustration({ id: "seed_walden_pond", name: "Walden Pond", category: "water" });
     expect(svg.startsWith("data:image/svg+xml;utf8,")).toBe(true);
     expect(decodeURIComponent(svg)).toContain("Walden Pond");
-    expect(svg).toBe(demoIllustration({ id: "seed_walden_pond", name: "Walden Pond", category: "water" }));
   });
 
   it("gives every seeded stamp a photo, and you a Gasson Hall stamp", () => {
     const world = buildDemoWorld(getSeedPlaces(), new Date("2026-10-24T18:00:00Z"));
     expect(world.stamps.every((s) => s.photoPath)).toBe(true);
+    // Every non-illustration photo carries a credit.
+    expect(world.stamps.filter((s) => !s.photoPath!.startsWith("data:")).every((s) => s.photoCredit)).toBe(true);
     expect(world.stamps.some((s) => s.userId === "demo-user" && s.placeId === "seed_bc_gasson_hall")).toBe(true);
   });
 

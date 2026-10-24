@@ -100,6 +100,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       </PixelPanel>
 
       <NotMedicalAdvice />
+      <p className="text-center text-xs text-wood-dark/70">
+        <Link href="/credits" className="underline">Photo &amp; data credits</Link>
+      </p>
     </div>
   );
 }

@@ -217,6 +217,7 @@ export async function getFeed(userId: string): Promise<(FeedItem & { avatarEmoji
       card: s.card,
       rarity: s.rarity,
       photoPath: s.photoPath,
+      photoCredit: s.photoCredit ?? null,
       healthSnapshot: s.healthSnapshot,
       // Routes stay private by default; no mini-map unless the user opts in.
       routeMiniMap: null,

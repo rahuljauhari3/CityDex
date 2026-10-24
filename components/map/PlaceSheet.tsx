@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import type { Place, Stamp } from "@/lib/db/types";
 import { rarityHex, RARITY_LABEL_HEX } from "./rarity";
 import { CollectFlow } from "@/components/stamp/CollectFlow";
+import { PhotoCredit } from "@/components/ui/PhotoCredit";
+import { placePhoto } from "@/lib/demo/photos";
 
 const CATEGORY_LABEL: Record<string, string> = {
   mural: "Mural",
@@ -63,6 +65,7 @@ export function PlaceSheet({
   if (!place) return null;
 
   const rarity = place.baselineRarity;
+  const photo = placePhoto(place.id);
   return (
     <>
       <button
@@ -75,10 +78,19 @@ export function PlaceSheet({
         role="dialog"
         aria-modal="true"
         aria-label={`${place.name} details`}
-        className="fixed inset-x-0 bottom-16 z-[1200] mx-auto max-w-screen-sm border-x-4 border-t-4 border-wood-dark bg-parchment p-4 pixel-shadow"
+        className="fixed inset-x-0 bottom-16 z-[1200] mx-auto max-h-[78dvh] max-w-screen-sm overflow-y-auto border-x-4 border-t-4 border-wood-dark bg-parchment p-4 pixel-shadow"
       >
         <div className="flex items-start justify-between gap-3">
-          <h2 className="font-heading text-2xl leading-tight text-wood-dark">
+          {photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photo.url}
+              alt={place.name}
+              className="h-16 w-20 shrink-0 border-4 object-cover"
+              style={{ borderColor: rarityHex(rarity) }}
+            />
+          )}
+          <h2 className="flex-1 font-heading text-2xl leading-tight text-wood-dark">
             {place.name}
           </h2>
           <button
@@ -91,6 +103,8 @@ export function PlaceSheet({
             ✕
           </button>
         </div>
+
+        {photo && <PhotoCredit credit={photo.credit} className="mt-1" />}
 
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <div>

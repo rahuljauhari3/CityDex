@@ -4,13 +4,38 @@
  * feed aren't empty. Places with a real photo in /public/demo use it instead.
  */
 
-import type { Place, PlaceCategory } from "@/lib/db/types";
+import type { PhotoCredit, Place, PlaceCategory } from "@/lib/db/types";
 import { seededRandom } from "@/lib/health/demo";
+import placePhotos from "@/data/seed/place-photos.json";
 
-/** Real photos taken on site, served from /public/demo. */
+/** Real photos taken on site by the team, served from /public/demo. */
 export const REAL_DEMO_PHOTOS: Record<string, string> = {
   seed_bc_gasson_hall: "/demo/gasson-hall.jpg",
 };
+
+export interface PlacePhoto {
+  url: string;
+  credit: PhotoCredit;
+  article?: string;
+}
+
+const COMMONS = (placePhotos as { photos: Record<string, { url: string; author: string; license: string; licenseUrl: string | null; source: string; article: string }> }).photos;
+
+/** A real, freely licensed photo of the place (team photo or Wikimedia Commons), if we have one. */
+export function placePhoto(placeId: string): PlacePhoto | null {
+  const team = REAL_DEMO_PHOTOS[placeId];
+  if (team) {
+    return { url: team, credit: { author: "CityDex team", license: "Used with permission", licenseUrl: null, source: team } };
+  }
+  const c = COMMONS[placeId];
+  if (!c) return null;
+  return { url: c.url, credit: { author: c.author, license: c.license, licenseUrl: c.licenseUrl, source: c.source }, article: c.article };
+}
+
+/** Every Wikimedia-sourced photo, for the credits page. */
+export function allPlacePhotos(): (PlacePhoto & { placeId: string })[] {
+  return Object.keys(COMMONS).map((id) => ({ placeId: id, ...placePhoto(id)! }));
+}
 
 const SKIES = [
   ["#7ec8e3", "#cdeefa"],
@@ -89,7 +114,8 @@ export function demoIllustration(place: Pick<Place, "id" | "name" | "category">)
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-/** Photo for a seeded demo stamp: a real on-site photo if we have one, else an illustration. */
-export function demoPhotoFor(place: Pick<Place, "id" | "name" | "category">): string {
-  return REAL_DEMO_PHOTOS[place.id] ?? demoIllustration(place);
+/** Photo for a seeded demo stamp: a real photo of the place if we have one, else an illustration. */
+export function demoPhotoFor(place: Pick<Place, "id" | "name" | "category">): { url: string; credit: PhotoCredit | null } {
+  const real = placePhoto(place.id);
+  return real ? { url: real.url, credit: real.credit } : { url: demoIllustration(place), credit: null };
 }

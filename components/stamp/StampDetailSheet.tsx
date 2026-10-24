@@ -8,6 +8,7 @@ import { NotMedicalAdvice } from "@/components/health/HealthBits";
 import { Sparkline } from "@/components/health/Sparkline";
 import { zone2Plus } from "@/lib/health/zones";
 import { StampHealthCard } from "./StampHealthCard";
+import { PhotoCredit } from "@/components/ui/PhotoCredit";
 
 interface Detail {
   place: Place;
@@ -67,11 +68,12 @@ export function StampDetailSheet({ placeId, onClose }: { placeId: string; onClos
               <div className="aspect-[4/3] w-full overflow-hidden border-4 bg-wood-dark/10" style={{ borderColor: frame }}>
                 {stamp.photoPath ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={stamp.photoPath} alt={`Your photo of ${detail.place.name}`} className="h-full w-full object-cover" />
+                  <img src={stamp.photoPath} alt={stamp.photoCredit ? `${detail.place.name}` : `Your photo of ${detail.place.name}`} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-center text-sm text-wood-dark/60">No photo for this visit</div>
                 )}
               </div>
+              {stamp.photoCredit && <PhotoCredit credit={stamp.photoCredit} className="mt-1" />}
               <h2 className="mt-3 pr-10 font-heading text-2xl leading-tight text-wood-dark">{detail.place.name}</h2>
               <p className="font-label text-xs uppercase text-wood-dark/75">
                 {detail.place.category}

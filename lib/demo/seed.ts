@@ -179,6 +179,7 @@ export function buildDemoWorld(places: Place[], now: Date): DemoWorld {
       snapshot.durationMin = Math.round(v.km * minPerKm);
     }
     const repeat = stamps.some((s) => s.userId === person.id && s.placeId === place.id);
+    const photo = demoPhotoFor(place);
     const card = buildStampCard({
       source: "seed",
       name: place.name,
@@ -199,7 +200,8 @@ export function buildDemoWorld(places: Place[], now: Date): DemoWorld {
       userId: person.id,
       placeId: place.id,
       routeId: null,
-      photoPath: demoPhotoFor(place),
+      photoPath: photo.url,
+      photoCredit: photo.credit,
       card,
       rarity: card.rarity,
       points: breakdown.total,

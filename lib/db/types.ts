@@ -167,8 +167,17 @@ export interface Stamp {
   rarity: Rarity;
   points: number;
   pointsBreakdown?: PointsSummary | null;
+  /** Attribution when the photo isn't the user's own (seeded demo stamps). */
+  photoCredit?: PhotoCredit | null;
   healthSnapshot: HealthSnapshot | null;
   createdAt: string;
+}
+
+export interface PhotoCredit {
+  author: string;
+  license: string;
+  licenseUrl: string | null;
+  source: string;
 }
 
 export interface PointsSummary {
@@ -233,6 +242,7 @@ export interface FeedItem {
   card: StampCard;
   rarity: Rarity;
   photoPath: string | null;
+  photoCredit?: PhotoCredit | null;
   healthSnapshot: HealthSnapshot | null;
   routeMiniMap: string | null;
   kudosCount: number;
@@ -267,6 +277,7 @@ export interface CreateStampInput {
   rarity: Rarity;
   points: number;
   pointsBreakdown?: PointsSummary | null;
+  photoCredit?: PhotoCredit | null;
   healthSnapshot?: HealthSnapshot | null;
   createdAt?: string;
 }

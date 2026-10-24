@@ -160,6 +160,7 @@ export const memoryStore: Store = {
       rarity: input.rarity,
       points: input.points,
       pointsBreakdown: input.pointsBreakdown ?? null,
+      photoCredit: input.photoCredit ?? null,
       healthSnapshot: input.healthSnapshot ?? null,
       createdAt: input.createdAt ?? nowIso(),
     };
