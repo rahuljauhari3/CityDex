@@ -1,6 +1,6 @@
-# Prompt for a new Claude Code session
+# Prompt for a new session
 
-Copy everything below the line into a new Claude Code session opened in `/Users/raj/coding/CityDex`.
+Copy everything below the line into a new session opened in `/Users/raj/coding/CityDex`.
 
 ---
 
@@ -10,12 +10,10 @@ CityDex is a mobile-first web app (PWA) for the Healthcare & Biotech track: it t
 
 ## Read first
 1. **`PLAN.md` in this folder is the source of truth.** Read all of it before writing code. It has the user flow, feature priorities, the provider adapter interface, the stamp card source rules, points and badge rules, the recommendation formula, UI tokens, the data model, privacy rules and milestones M0–M8.
-2. **No AI anywhere.** The app uses no Anthropic SDK or API and no Kiro ACP card generation — there is no `kiro-cli` subprocess and no `lib/ai`. The stamp's name, category and rarity come from the place: a seeded place supplies its stored values; a new user-created place uses the name + category the user types (rarity `common`). The photo is stored and shown exactly as uploaded (resized ≤ 1280 px, EXIF stripped). A required "No people are the main subject of this photo" checkbox replaces any image analysis.
 
 ## How to work
 - Build the milestones **in order (M0 → M8)**. Each milestone must end in a running app. Commit after each one with a clear message. **Do not add any `Co-Authored-By` trailer to commits.** Don't push or create remote repos unless I ask.
 - **Demo mode must always work:** with only `DEMO_MODE=true` and no API keys, the full flow (map → check-in → photo → card → points → leaderboard) must run, using the demo health provider. The stamp card is built from place data + the uploaded photo. Real keys switch on the real integrations.
-- Stack: Next.js (App Router) + TypeScript + Tailwind, Supabase (Auth, Postgres with RLS, Storage), react-leaflet + OpenStreetMap tiles (keep attribution), zod. **No AI:** no `@anthropic-ai/sdk`, no Anthropic API, no `kiro-cli` subprocess. Keep all provider tokens server-side only.
 - Health integrations: follow PLAN.md section 4 exactly. Apple Health and Samsung Health have **no web API**. Apple uses an uploaded `export.xml` parser, Samsung and Garmin are "coming soon" stubs, Strava (P1) and WHOOP/Fitbit (P2) use web OAuth. Label demo and estimated values clearly ("DEMO", "est.").
 - Privacy rules in PLAN.md section 11 are requirements, not nice-to-haves: no location on leaderboards, strip photo EXIF, require the "No people are the main subject of this photo" checkbox (reject the check-in if it is not set), consent screen, "not medical advice" footer.
 - Mobile first: design and test at 375×812. After each UI milestone, run the dev server through the preview tools, check the console for errors, and screenshot the main screens at mobile size to verify. Fix issues before moving on.

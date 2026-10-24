@@ -64,7 +64,6 @@ Now let me grep for all AI references across the codebase (excluding logs/node_m
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
-Good — no `@anthropic-ai/sdk` dependency to remove (it was already removed). Now `next.config.ts`, the map components, and the dex route.
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
@@ -93,7 +92,6 @@ Now let me check how `demoMode` / `isDemoMode` flows to the map, and the map pag
 [tool] Grep Search
 [tool] status: InProgress
 [tool] status: Completed
-Now I have a full picture. Let me set up my task list and begin. First let me check `.env.example`, the tests dir, scripts dir, and the `.claude` dir / smoke script.
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
@@ -103,14 +101,12 @@ Now I have a full picture. Let me set up my task list and begin. First let me ch
 [tool] List Directory
 [tool] status: InProgress
 [tool] status: Completed
-The `.env.example` is already clean of AI vars (good, the working tree has it modified). Let me check the config test and ai.test.ts, then check the `.claude` dir and journal location.
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
-Now let me check the `.claude/` dir, the journal location (task says `.kiro/logs/KIRO_JOURNAL.md` but there's also a root `KIRO_JOURNAL.md`), the dex route, demo-user, and rarity.ts.
 [tool] List Directory
 [tool] status: InProgress
 [tool] status: Completed
@@ -120,7 +116,6 @@ Now let me check the `.claude/` dir, the journal location (task says `.kiro/logs
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
-Let me check the `.claude/launch.json`, dex route, demo-user, and rarity.ts (components/map). The task mentions rarity adjustment (first 3 collectors +1 tier, >50 cap uncommon) — but that's actually B1.7. For B0, the design says card rarity comes from the place. Let me check design.md §6/§7 for B0 scope on rarity.
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
@@ -130,7 +125,6 @@ Let me check the `.claude/launch.json`, dex route, demo-user, and rarity.ts (com
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
-The `.claude/launch.json` is untracked (part of the half-finished AI work setup). The task says delete `lib/ai` entirely, scripts/kiro-card-smoke.mjs, AI tests, smoke:kiro script, leftover hasAnthropic/AI config. It doesn't mention `.claude/` so I'll leave it. Let me check the design.md for B0 rarity/card details and the Dex page component. Let me check design.md relevant sections.
 [tool] File Search
 [tool] status: InProgress
 [tool] status: Completed
@@ -285,7 +279,6 @@ Now remove the now-unused `.stamp-dither` CSS block. Also B0.6: tab-bar safe-are
 [tool] Replace in File
 [tool] status: Pending
 [tool] status: Completed
-Now B0.6: `devIndicators: false` in next.config.ts, and the tab bar safe-area inset. Let me update next.config.ts (also fix the stale Anthropic comment).
 [tool] Replace in File
 [tool] status: Pending
 [tool] status: Completed

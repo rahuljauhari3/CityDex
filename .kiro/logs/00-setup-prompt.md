@@ -2,7 +2,6 @@ You are setting up the Kiro workspace for CityDex. Read PLAN.md and AGENT_PROMPT
 
 1. Steering files in .kiro/steering/ with YAML front-matter `inclusion: always`:
    - product.md  (what CityDex is, users, H1 healthcare track, demo script summary, priorities P0/P1/P2)
-   - tech.md     (stack from PLAN.md §5, demo-mode-must-always-work rule, Claude API rules from PLAN §6: model claude-opus-5-5, client.messages.parse + zodOutputFormat from @anthropic-ai/sdk/helpers/zod, base64 image block before text, handle stop_reason "refusal", guard parsed_output null; server-side keys only)
    - structure.md (proposed Next.js App Router folder layout: app/, components/, lib/{health,points,badges,recs,geo,ai,db}/, tests/, data/seed)
    - privacy.md  (PLAN §11 rules as hard requirements)
    - ui.md       (PLAN §9 tokens, fonts, components, mobile-first 375x812, accessibility)
@@ -12,9 +11,8 @@ You are setting up the Kiro workspace for CityDex. Read PLAN.md and AGENT_PROMPT
    - citydex-tester.json: writes and runs vitest unit tests for pure logic (points, badges, recs, haversine/geofence, Apple Health XML parser). write allowedPaths restricted to tests/** and vitest.config.*.
    - citydex-reviewer.json: read-only reviewer (tools read/grep/glob/shell with autoAllowReadonly, no write tool), checks code against privacy.md, tech.md and PLAN.md acceptance criteria, reports findings with file:line.
    - citydex-ui.json: frontend/pixel-art UI specialist focused on ui.md, mobile layout, accessibility; write allowedPaths app/**, components/**, styles/**, public/**, tailwind.config.*.
-3. A skill at .kiro/skills/claude-vision-card/SKILL.md (with name/description front-matter) documenting the exact @anthropic-ai/sdk pattern for the stamp card: client.messages.parse, zodOutputFormat(StampCardSchema), output_config {effort:"low", format}, image content block {type:"image", source:{type:"base64", media_type, data}} before the text block, refusal handling → "Mystery Spot" card, null parsed_output guard, and a deterministic mock generator when ANTHROPIC_API_KEY is missing.
-4. A prompt file .kiro/prompts/milestone.md: reusable template "Implement milestone {{M}} from PLAN.md §12 following steering; use the task list; delegate tests to citydex-tester and a review to citydex-reviewer via the subagent tool; fix findings; verify lint/tsc/tests; commit."
-5. .kiro/logs/KIRO_JOURNAL.md: start a development journal explaining which Kiro features are being used and why (steering, custom agents, hooks, skills, prompts, specs, subagents/crew, knowledge, MCP). Keep it factual and short.
-6. A .gitignore with node_modules, .next, .env.local, .env*.local, coverage, *.tsbuildinfo.
+3. A prompt file .kiro/prompts/milestone.md: reusable template "Implement milestone {{M}} from PLAN.md §12 following steering; use the task list; delegate tests to citydex-tester and a review to citydex-reviewer via the subagent tool; fix findings; verify lint/tsc/tests; commit."
+4. .kiro/logs/KIRO_JOURNAL.md: start a development journal explaining which Kiro features are being used and why (steering, custom agents, hooks, skills, prompts, specs, subagents/crew, knowledge, MCP). Keep it factual and short.
+5. A .gitignore with node_modules, .next, .env.local, .env*.local, coverage, *.tsbuildinfo.
 
 Do not run shell commands in this run (shell is not pre-approved). Finish by listing every file you created.

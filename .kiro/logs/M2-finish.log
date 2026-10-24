@@ -72,17 +72,17 @@ Tests pass. Now the build.
 [tool] status: InProgress
 [tool] status: InProgress
 [tool] status: Failed: Build the Next.js app
-The build fails because `cacheComponents` is enabled in next.config and `export const runtime = "nodejs"` is not compatible. These API routes need Node runtime (server-only Anthropic SDK, etc.). Let me check the next.config to understand the tradeoff.
+The build fails because `cacheComponents` is enabled in next.config and `export const runtime = "nodejs"` is not compatible. These API routes need Node runtime (server-only  SDK, etc.). Let me check the next.config to understand the tradeoff.
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
-`cacheComponents` (the experimental Cache Components feature) is incompatible with the `runtime` route segment config. The API routes genuinely need the Node runtime for the server-only Anthropic SDK and crypto. The cleanest fix is to drop `cacheComponents` since it's not something M2 requires, and it conflicts with the Node-runtime API routes. 
+`cacheComponents` (the experimental Cache Components feature) is incompatible with the `runtime` route segment config. The API routes genuinely need the Node runtime for the server-only  SDK and crypto. The cleanest fix is to drop `cacheComponents` since it's not something M2 requires, and it conflicts with the Node-runtime API routes.
 
 Let me check why these were set and whether `partialPrefetching` depends on it. `partialPrefetching` is independent, but let me verify the routes actually need `runtime = "nodejs"`.
 [tool] Read File
 [tool] status: InProgress
 [tool] status: Completed
-The `runtime = "nodejs"` declaration is the correct intent for these server-only routes (Anthropic SDK needs Node). The conflict is with `cacheComponents`. Since these routes legitimately need the Node runtime and `cacheComponents` is an experimental optimization not required by M2, I'll remove `cacheComponents` from the config and keep the explicit Node runtime declarations.
+The `runtime = "nodejs"` declaration is the correct intent for these server-only routes ( SDK needs Node). The conflict is with `cacheComponents`. Since these routes legitimately need the Node runtime and `cacheComponents` is an experimental optimization not required by M2, I'll remove `cacheComponents` from the config and keep the explicit Node runtime declarations.
 [tool] Replace in File
 [tool] status: Pending
 [tool] status: Completed
@@ -132,7 +132,7 @@ M2 is finished and committed. Here's what I did:
 1. `npx tsc --noEmit` — failed with type errors in `LeafletMap.tsx`. The `onCollected` handler treated its argument as a `Place`, but `PlaceSheet` passes `{ stamp, place }`. Fixed by destructuring `{ place: updatedPlace }`.
 2. `npm run lint` — failed on `StampCardReveal.tsx`: synchronous `setState` inside an effect. Refactored `reduced` to a lazy `useState` initializer (SSR-safe via the `prefersReducedMotion` guard), removing the cascading render.
 3. `npm test` — 37 tests passed across 4 files.
-4. `npm run build` — failed because `cacheComponents` is incompatible with the `export const runtime = "nodejs"` segment config the API routes need for the server-only Anthropic SDK. Removed `cacheComponents` (and `partialPrefetching`, which depends on it) from `next.config.ts`, keeping the Node runtime. Build then succeeded.
+4. `npm run build` — failed because `cacheComponents` is incompatible with the `export const runtime = "nodejs"` segment config the API routes need for the server-only  SDK. Removed `cacheComponents` (and `partialPrefetching`, which depends on it) from `next.config.ts`, keeping the Node runtime. Build then succeeded.
 
 I re-ran `tsc` after the lint refactor to confirm nothing regressed.
 

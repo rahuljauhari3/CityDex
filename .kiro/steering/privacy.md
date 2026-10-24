@@ -44,5 +44,5 @@ violation as a build failure.
 
 ## Secrets
 - All provider tokens stay server-side only; never shipped to the client.
-- The app uses **no AI** — no Anthropic SDK or API, and no `kiro-cli`
+- The app uses **no AI** — no  SDK or API, and no `kiro-cli`
   subprocess.

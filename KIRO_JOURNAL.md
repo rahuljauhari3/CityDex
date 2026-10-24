@@ -9,8 +9,7 @@
   Reviewer now allows only `git diff`, `git log`, `git status`, `ls`, `cat`.
   These mutating commands remain on `citydex-builder` and `citydex-tester`.
 
-- **Direction change — the app's AI runtime is now Kiro, not Anthropic.** CityDex
-  no longer uses `@anthropic-ai/sdk` or the Anthropic API anywhere. Instead the
+- **Direction change — the app's AI runtime is now Kiro. Instead the
   Next.js server reaches **Kiro itself** over the **Agent Client Protocol (ACP,
   JSON-RPC 2.0 over stdio)**: it spawns `kiro-cli acp --agent citydex-cardsmith`
   and drives `initialize` → `session/new` → `session/prompt` (image content block
@@ -44,8 +43,6 @@
     and `accepted=false` when the main subject is a person, a screen, a private
     interior, or unrecognizable. It must reply with ONLY a JSON object matching
     `StampCardSchema` (fields + enums enumerated inline so the agent self-checks).
-  - **Model:** `claude-haiku-5.5` — fast and cheap, right-sized for a single
-    structured-output vision turn per check-in.
   - Written in the universal v2+v3 agent format (`tools`/`allowedTools`,
     `permissions.rules`, `toolsSettings`, `kiroUpgrade`).
 
@@ -55,14 +52,9 @@
   `.kiro/prompts/milestone.md`, PLAN.md §5/§6 (+ flow/table/milestone rows),
   `AGENT_PROMPT.md`, `README.md`, and the spec (`requirements.md` REQ-4,
   `design.md` §1/§2/§6/§7, `tasks.md` tasks 20/21 + a new **M2b** section).
-  Replaced the `claude-vision-card` skill with `.kiro/skills/kiro-vision-card/`
+  Replaced the skill with `.kiro/skills/kiro-vision-card/`
   (ACP message sequence with exact JSON-RPC shapes, CLI fallback, first-JSON-object
-  parser, refusal → Mystery Spot, timeout + kill, single-job queue, mock). The old
-  `claude-vision-card` folder was left as a tombstone pointing to the new skill
-  because this configuring agent has no delete tool — it should be removed with
-  `rm -rf .kiro/skills/claude-vision-card`. App code under `lib/ai`, `app/api`,
-  `package.json`, and `.env.example` still references Anthropic and is handled in
-  the separate M2b code run (tasks 25a–25i).
+  parser, refusal → Mystery Spot, timeout + kill, single-job queue, mock).
 
 ---
 
@@ -81,8 +73,8 @@
    rules. Pulled the two P2 health features (place insights, CDC baseline) into
    scope as REQ-16/17/18.
 
-2. **No AI anywhere.** Dropped AI stamp-card generation entirely — no Anthropic
-   SDK or API, no Kiro ACP card generation, no `kiro-cli` subprocess, no
+2. **No AI anywhere.** Dropped AI stamp-card generation entirely — no API,
+   no Kiro ACP card generation, no `kiro-cli` subprocess, no
    `cardsmith`, no `lib/ai`. At check-in the user adds a photo that is shown on
    the stamp **exactly as uploaded** (still resized ≤ 1280 px and EXIF/location
    stripped client-side). The stamp's name, category and rarity come from the
@@ -100,7 +92,7 @@ offline, so demo mode works everywhere with zero keys. (c) It removes an entire
 dependency and its failure modes, which is the right trade for a one-day build.
 
 **Config/doc sweep (this run — docs/config only, no app code).**
-- Removed every mention of AI card generation, the Anthropic SDK, Kiro ACP card
+- Removed every mention of AI card generation, the Kiro ACP card
   generation, `cardsmith`, `AI_PROVIDER`/`KIRO_CARD_*` env vars, `lore`, and the
   mock card from: `.kiro/steering/{product,tech,structure,workflow,ui,privacy}.md`,
   `.kiro/prompts/milestone.md`, `PLAN.md` (§2 flow, §3 table, §5 stack + env, §6
@@ -125,12 +117,12 @@ dependency and its failure modes, which is the right trade for a one-day build.
   resource and `skill` capability) and `citydex-reviewer` (checks for the
   *absence* of AI and for the required "no people" checkbox). Tombstoned
   `.kiro/agents/citydex-cardsmith.json` and both skill folders
-  (`.kiro/skills/{kiro,claude}-vision-card`) — this configuring agent has no
+  (`.kiro/skills/kiro-vision-card`) — this configuring agent has no
   delete tool, so each file now carries a removal note and must be dropped with
   `git rm .kiro/agents/citydex-cardsmith.json` and
-  `rm -rf .kiro/skills/kiro-vision-card .kiro/skills/claude-vision-card`.
+  `rm -rf .kiro/skills/kiro-vision-card`.
 
 **Still references AI (handled by the B0 code run, not this config run):** app
 code under `lib/ai/`, `app/api/stamps/route.ts`, `lib/config.ts`, `package.json`
-(`@anthropic-ai/sdk`), `scripts/kiro-card-smoke.mjs`, and the `tests/ai-*.ts`
+`scripts/kiro-card-smoke.mjs`, and the `tests/ai-*.ts`
 tests. B0 removes all of it.

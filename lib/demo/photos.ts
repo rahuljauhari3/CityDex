@@ -11,6 +11,7 @@ import placePhotos from "@/data/seed/place-photos.json";
 /** Real photos taken on site by the team, served from /public/demo. */
 export const REAL_DEMO_PHOTOS: Record<string, string> = {
   seed_bc_gasson_hall: "/demo/gasson-hall.jpg",
+  seed_boston_common: "/demo/boston-common.jpg",
 };
 
 export interface PlacePhoto {
@@ -25,7 +26,7 @@ const COMMONS = (placePhotos as { photos: Record<string, { url: string; author: 
 export function placePhoto(placeId: string): PlacePhoto | null {
   const team = REAL_DEMO_PHOTOS[placeId];
   if (team) {
-    return { url: team, credit: { author: "CityDex team", license: "Used with permission", licenseUrl: null, source: team } };
+    return { url: team, credit: { author: "CityDex team", license: "Provided by the team", licenseUrl: null, source: team } };
   }
   const c = COMMONS[placeId];
   if (!c) return null;
@@ -34,7 +35,9 @@ export function placePhoto(placeId: string): PlacePhoto | null {
 
 /** Every Wikimedia-sourced photo, for the credits page. */
 export function allPlacePhotos(): (PlacePhoto & { placeId: string })[] {
-  return Object.keys(COMMONS).map((id) => ({ placeId: id, ...placePhoto(id)! }));
+  return Object.keys(COMMONS)
+    .filter((id) => !REAL_DEMO_PHOTOS[id])
+    .map((id) => ({ placeId: id, ...placePhoto(id)! }));
 }
 
 const SKIES = [

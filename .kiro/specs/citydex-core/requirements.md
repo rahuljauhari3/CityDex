@@ -90,7 +90,7 @@ without any AI.
 lng, accuracy, routeId, and either `placeId` for a seeded place or `name` +
 `category` for a new user-created place, plus the "no people" checkbox flag),
 THE SYSTEM SHALL process it server-side only.
-4.2 THE SYSTEM SHALL use **no AI anywhere** — no Anthropic SDK or API, no Kiro
+4.2 THE SYSTEM SHALL use **no AI anywhere** — no  SDK or API, no Kiro
 ACP card generation, and no `kiro-cli` subprocess.
 4.3 WHERE the check-in targets a **seeded place**, THE SYSTEM SHALL build the
 card from that place's stored `name`, `category` and `rarity`.

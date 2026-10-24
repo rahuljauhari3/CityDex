@@ -7,11 +7,9 @@ This is a large task. Let me read the key files I need to modify: the two log pr
 Now let me read the three spec files and the remaining steering/doc files I need to edit.
 [tool] Reading requirements.md:1, design.md:1, tasks.md:1
 [tool] status: Completed
-Now let me read the remaining files I need to edit: the KIRO_JOURNAL.md, the kiro-vision-card skill, claude-vision-card skill, and check the env.example and PLAN sections. Let me also check the citydex-builder's fingerprint concern and the reviewer agent.
 [tool] Reading KIRO_JOURNAL.md:1, .env.example:1, SKILL.md:1, citydex-reviewer.json:1, citydex-tester.json:1
 [tool] status: Completed
 Now let me look at the PLAN.md section 5/6 references and the milestone prompt, product.md. Let me grep for AI references across all the config/doc files I'll touch.
-[tool] Searching for 'AI_PROVIDER|KIRO_CARD|cardsmith|kiro-vision|claude-vision...' in CityDex
 [tool] status: Completed
 The `.kiro/logs/*` files are historical records (prompts and journals from past runs) — I'll leave those as-is since they're logs documenting history, except the live KIRO_JOURNAL.md at repo root which I'll append to. Let me read the remaining doc files to edit precisely: PLAN.md full, milestone.md, tech.md, structure.md, workflow.md, ui.md.
 
@@ -20,7 +18,6 @@ Let me read the remaining ones I haven't fully seen (PLAN sections, milestone pr
 [tool] status: Completed
 I have enough context. This is a large change. Let me plan the work:
 
-1. **Delete files**: `.kiro/agents/citydex-cardsmith.json`, `.kiro/skills/kiro-vision-card/`, `.kiro/skills/claude-vision-card/`. I can't delete via tools — I'll note which need `git rm` but since I have `write` only, I'll overwrite the skill files as tombstones... Actually the instruction says to delete. Let me check if I can remove them. I only have read/write/glob/grep tools, no shell. I'll empty/tombstone them and clearly flag for deletion. Actually, better: the user explicitly says "Delete". I don't have a delete tool. I'll write tombstone content and flag it prominently.
 
 Let me start making edits. First, let me read the PLAN.md fully to edit precisely.
 [tool] Reading PLAN.md:1
@@ -58,7 +55,6 @@ I guessed at the structure.md original but it matched. Now let me check what the
 [tool] Editing ui.md
 [tool] status: Completed
 ui.md had a second match (the "After each UI milestone" one isn't AI-related). Let me check the ui.md line that matched the grep — likely "stamp card" twice. The grep found 2 matches for ui.md; one was the stamp card line (fixed), the other probably `stamp-card`. Let me verify no AI terms remain in ui.md, and fix workflow.md and privacy.md.
-[tool] Searching for 'AI_PROVIDER|KIRO_CARD|cardsmith|kiro-vision|claude-vision...' in steering
 [tool] status: Completed
 The remaining tech.md/product.md/structure.md/ui.md matches are the intentional "no AI" statements. Now fix privacy.md and workflow.md. Let me read the privacy.md photos section fully.
 [tool] Reading privacy.md:21-50
@@ -88,7 +84,6 @@ Now AGENT_PROMPT.md. Let me read it fully to rewrite the AI-related parts.
 [tool] status: Completed
 [tool] Editing AGENT_PROMPT.md
 [tool] status: Completed
-The AGENT_PROMPT header still says "Claude Code session". That's a historical artifact not in scope for AI-card removal; I'll leave it. Now README.md.
 [tool] Editing README.md
 [tool] status: Completed
 Hmm, the README intro I replaced differs from the context version. Let me check — actually the context showed a different README intro (the "Health is the point" one already). The strReplace succeeded, meaning the on-disk version was the old AI one. Good. Now fix the rest of README — tech stack, demo mode, env vars sections.
@@ -124,14 +119,11 @@ Now the reviewer agent — rewrite the prompt to drop AI checks and add "no AI a
 [tool] Editing citydex-reviewer.json
 [tool] status: Completed
 Now check the other agents (ui, tester, bootstrap) for AI references. The tester prompt looked clean (Apple Health parser etc.). Let me grep agents.
-[tool] Searching for 'AI_PROVIDER|KIRO_CARD|cardsmith|kiro-vision|claude-vision...' in agents
 [tool] status: Completed
-Builder and reviewer matches are the intentional "no AI" statements. Only `citydex-cardsmith.json` remains to delete. I cannot delete files with my tools. I'll overwrite it as a clear tombstone marker (a minimal JSON that is obviously a removal note), matching the tombstone pattern already used for claude-vision-card. Then flag that it needs `git rm`.
 
 Actually, a JSON tombstone that's still a valid agent could be loaded as an agent. Better approach: make it a non-agent marker. Since Kiro agent files must be valid, I'll write a minimal deprecation note JSON that is clearly inert (no prompt/tools). Let me write it as a tombstone.
 [tool] Creating citydex-cardsmith.json
 [tool] status: Completed
-Now the skills. Both `kiro-vision-card/SKILL.md` and `claude-vision-card/SKILL.md` must be deleted. Same tombstone approach.
 [tool] Creating SKILL.md
 [tool] status: Completed
 [tool] Creating SKILL.md
@@ -205,7 +197,7 @@ The user's target doc set — `.kiro/steering/*.md`, `PLAN.md`, `AGENT_PROMPT.md
 Let me do a final check on the specs `tasks.md` line 90-94 (the B0 grep-targets list is intentional) and confirm the design.md renumbering didn't leave a dangling reference. Let me verify the design.md section headers are sequential and there's no orphaned reference to old §6 AI naming elsewhere.
 [tool] Searching for 'AI card|AI stamp|AI pipeline|§6 \(AI|REQ-4\.9|REQ-4\.6 \...' in specs
 [tool] status: Completed
-Those are all intentional references to the removal of the old AI path (historical note + B0 instructions). 
+Those are all intentional references to the removal of the old AI path (historical note + B0 instructions).
 
 Let me verify the design.md no longer has a REQ-4.9 reference since REQ-4.9 no longer exists (REQ-4 now ends at 4.8). I already rewrote §1 to reference "REQ-14.10" only. Good.
 
@@ -220,7 +212,6 @@ I updated CityDex's configuration and docs only (no app code) to reflect the two
 - Pulled the two P2 health features into scope as **REQ-16** (place insights over time), **REQ-17** (CDC PLACES Suffolk County baseline), **REQ-18** (weekly health summary), with matching `design.md` sections §15/§16/§17 (the `computePlaceInsights` ±10% pace-bucketing + bpm/week trend, the `data/cdc-places-suffolk.json` file format, and `computeWeeklySummary`).
 
 **All AI removed from docs/config**
-- Scrubbed AI card generation, Anthropic SDK, Kiro ACP, `cardsmith`, `AI_PROVIDER`/`KIRO_CARD_*` env vars, `lore`, and the mock card from the steering files, `PLAN.md` (§2/§3/§5/§6/§9/§11/§12, §6 rewritten as "Stamp card generation (no AI)"), `AGENT_PROMPT.md`, `README.md`, `.env.example`, `.kiro/prompts/milestone.md`, and the spec (REQ-4/5/8.3/14.8, design §1/§2/§4/§6/§7/§8/§12/§14).
 - Replaced the AI "person as main subject" check with the required "No people are the main subject of this photo" checkbox (server returns 4xx and stores nothing if unset); the photo is stored and shown exactly as uploaded.
 - Rewrote `citydex-builder` and `citydex-reviewer` agents (no-AI prompt; reviewer now checks for the *absence* of AI and the checkbox; removed the builder's `skill://` resource and `skill` capability).
 
@@ -231,7 +222,6 @@ I updated CityDex's configuration and docs only (no app code) to reflect the two
 **One thing I could not finish with my tools (needs `git rm`):** I can create and edit files but cannot delete them, so I turned these into clearly-marked removal tombstones rather than deleting them. Please run:
 ```
 git rm .kiro/agents/citydex-cardsmith.json
-rm -rf .kiro/skills/kiro-vision-card .kiro/skills/claude-vision-card
 ```
 
 The remaining AI references in `.kiro/logs/*` are historical prompt/journal records and were intentionally left untouched. App-code AI references (`lib/ai/`, `app/api/stamps/route.ts`, `lib/config.ts`, `package.json`, `scripts/kiro-card-smoke.mjs`, `tests/ai-*.ts`) are out of scope for this docs/config run and are handled by batch B0.

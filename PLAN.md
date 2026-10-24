@@ -132,7 +132,7 @@ At check-in, merge snapshots from all connected providers. Prefer real device da
 - **Backend:** Next.js route handlers / server actions.
 - **Database / Auth / Storage:** Supabase (Postgres, Auth, Storage bucket `stamps` for photos, Row Level Security on every table).
 - **Map:** `react-leaflet` + OpenStreetMap tiles (keep the © OpenStreetMap attribution visible). Pixel-styled custom markers.
-- **AI:** **None.** The app uses **no AI anywhere** — no Anthropic SDK or API, no Kiro ACP card generation, no `kiro-cli` subprocess. The stamp's name, category and rarity come from the place (seed data) or the user's typed name + category for a new place; the photo is shown exactly as uploaded.
+- **AI:** **None.** The app uses **no AI anywhere** — no Kiro ACP card generation, no `kiro-cli` subprocess. The stamp's name, category and rarity come from the place (seed data) or the user's typed name + category for a new place; the photo is shown exactly as uploaded.
 - **Validation:** `zod` everywhere (API inputs, provider responses).
 - **Geo math:** haversine in TypeScript (PostGIS is optional; not needed for the demo scale).
 

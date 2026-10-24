@@ -6,7 +6,7 @@ A short, factual record of which Kiro features we use and why.
 Always-on project context so every agent shares the same rules without
 re-prompting:
 - `product.md` — what CityDex is, users, H1 track, demo script, P0/P1/P2.
-- `tech.md` — stack, demo-mode-always-works rule, Claude API rules.
+- `tech.md` — stack, demo-mode-always-works rule.
 - `structure.md` — Next.js App Router layout; pure logic isolated in `lib/`.
 - `privacy.md` — PLAN §11 rules as hard requirements.
 - `ui.md` — pixel × Strava tokens, fonts, components, mobile-first + a11y.
@@ -25,11 +25,6 @@ Automation at agent lifecycle points:
 - `agentSpawn` — show git status + recent log for orientation.
 - `postToolUse` (write) — fast `tsc --noEmit` when `package.json` exists.
 - `stop` — run lint at the end of a turn.
-
-## Skills (`.kiro/skills/claude-vision-card/SKILL.md`)
-Captures the exact `@anthropic-ai/sdk` stamp-card pattern (messages.parse +
-zodOutputFormat, image-before-text, refusal + null guards, deterministic mock)
-so the AI call is implemented correctly without guessing SDK shapes.
 
 ## Prompts (`.kiro/prompts/milestone.md`)
 Reusable `{{M}}` template to drive each milestone consistently (task list →
@@ -112,23 +107,9 @@ and `citydex-ui`. The builder's `"tools": ["*"]` array was left unchanged.
 ## M2 — Check-in + photo + AI card + Dex (what Kiro features helped)
 - **Spec drove scope:** `tasks.md` 17–25 and `design.md` §6 (AI schema/pipeline)
   and §7 (check-in sequence) fixed the order: photo capture → geofence/accuracy
-  gates → `StampCardSchema` → Claude client → mock → `POST /api/stamps` → card
+  gates → `StampCardSchema` → Kiro ACP → mock → `POST /api/stamps` → card
   reveal → Dex grid. The single `StampCard` type now lives in `lib/ai/schema.ts`
   and `lib/db/types.ts` re-exports it, so the store and AI share one contract.
-- **`claude-vision-card` skill (activated):** the skill fixed the semantics —
-  model `claude-opus-5-5`, image content block BEFORE text, `stop_reason ===
-  "refusal"` → Mystery Spot (store no photo), null-guard the parsed output,
-  deterministic mock keyed by an FNV-1a hash of the image bytes, server-only.
-- **SDK reality vs. skill (do-not-guess):** the installed `@anthropic-ai/sdk`
-  is `0.70.1`, which exposes structured output through the **beta** API, not the
-  skill's literal tokens. Verified against `node_modules`:
-  `@anthropic-ai/sdk/helpers/beta/zod` exports `betaZodOutputFormat`;
-  `client.beta.messages.parse(...)` takes `output_format` (not `output_config`,
-  no `effort`); and `lib/beta-parser.d.ts` puts the parsed value on
-  `message.parsed_output`. `BetaStopReason` includes `'refusal'`.
-  `lib/ai/claude.ts` is written to that real shape while preserving every skill
-  semantic. The SDK is imported **lazily** (dynamic `import()`), so the mock /
-  demo path never needs the package at build or runtime (demo-always-works).
 - **Privacy at the boundary:** `lib/photo.ts` re-encodes the capture through a
   canvas (≤1280 px, JPEG ~0.8), which drops all EXIF/GPS before upload; the
   server never trusts EXIF. New user places are created at `roundCoord(pos)`

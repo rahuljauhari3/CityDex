@@ -14,7 +14,7 @@ inclusion: always
   `stamps` for photos, Row Level Security on every table).
 - **Map:** `react-leaflet` + OpenStreetMap tiles. Keep the © OpenStreetMap
   attribution visible. Pixel-styled custom markers.
-- **AI:** **None.** The app uses **no AI anywhere** — no Anthropic SDK or API,
+- **AI:** **None.** The app uses **no AI anywhere** — no  SDK or API,
   no Kiro ACP card generation, no `kiro-cli` subprocess. The stamp's name,
   category and rarity come from the place (seed data) or, for a new
   user-created place, the name + category the user types (rarity `common`); the

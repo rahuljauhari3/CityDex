@@ -7,7 +7,7 @@ bundles related milestones and ends in a running app, committed after
 message `B<n>: <summary>`, no `Co-Authored-By` trailer). Each task references the
 requirement IDs it satisfies.
 
-**No AI anywhere.** There is no `lib/ai`, no Anthropic SDK or API, no Kiro ACP
+**No AI anywhere.** There is no `lib/ai`, no Kiro ACP
 card generation, and no `kiro-cli` subprocess. The stamp card is assembled from
 place data + the uploaded photo (seeded place → stored name/category/rarity; new
 user-created place → user-typed name + category, rarity `common`), with a
@@ -87,10 +87,10 @@ photo shown exactly as uploaded, then clear the QA findings in
 place + uploaded photo, fix QA findings`.
 
 - [ ] B0.1. Delete all AI code: remove `lib/ai/` entirely, drop
-  `@anthropic-ai/sdk` from `package.json`/lockfile, remove `AI_PROVIDER`,
+  from `package.json`/lockfile, remove `AI_PROVIDER`,
   `KIRO_CLI_PATH`, `KIRO_CARD_AGENT`, `KIRO_CARD_TIMEOUT_MS` from `lib/config.ts`
   and `.env.example`, and delete `scripts/kiro-card-smoke.mjs`. Grep for
-  `anthropic`, `claude`, `kiro-cli`, `AI_PROVIDER`, `StampCardSchema`, `lore`,
+ `kiro-cli`, `AI_PROVIDER`, `StampCardSchema`, `lore`,
   `Mystery Spot`, `cardsmith` and confirm none remain outside historical logs.
   _(REQ-4.2)_
 - [ ] B0.2. Define the place-based `StampCard` type/zod schema (`name`,

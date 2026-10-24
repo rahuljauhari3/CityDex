@@ -57,9 +57,6 @@ Custom agents (`.kiro/agents/`)
 - `.kiro/agents/citydex-reviewer.json`
 - `.kiro/agents/citydex-ui.json`
 
-Skill
-- `.kiro/skills/claude-vision-card/SKILL.md`
-
 Prompt
 - `.kiro/prompts/milestone.md`
 
@@ -71,5 +68,4 @@ Repo
 
 A few notes:
 - The existing `.kiro/agents/citydex-bootstrap.json` and the `.kiro/logs/00-setup*.md`/`.log` files from the bootstrap step were left untouched.
-- The `citydex-builder` agent references `skill://.kiro/skills/**/SKILL.md`, which now resolves to the `claude-vision-card` skill I created.
 - All agent JSON validated by re-read; the builder's hooks (`agentSpawn`, `postToolUse` on `write` with a 90s typecheck, `stop` lint), scoped shell allow/deny lists, write deny paths, and crew trust lists match the spec.

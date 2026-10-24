@@ -17,7 +17,7 @@ export default function CreditsPage() {
         <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-wood-dark">
           <li>Map tiles and places: © OpenStreetMap contributors (ODbL).</li>
           <li>County baseline: CDC PLACES, County Data, 2025 release.</li>
-          <li>Gasson Hall photo: taken by the CityDex team at Boston College.</li>
+          <li>Gasson Hall and Boston Common photos: provided by the CityDex team.</li>
           <li>Other demo stamps without a photo use original illustrations made for CityDex.</li>
         </ul>
       </PixelPanel>

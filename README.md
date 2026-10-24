@@ -145,8 +145,8 @@ tests/             # vitest unit tests
   with the author and license shown in the Dex and on `/credits`. The metadata
   is in `data/seed/place-photos.json`; regenerate it with
   `node scripts/fetch-place-photos.mjs`. Images load from Wikimedia at runtime.
-- Gasson Hall photo: taken by the CityDex team at Boston College
-  (`public/demo/gasson-hall.jpg`), with no location metadata.
+- Gasson Hall and Boston Common photos: provided by the CityDex team
+  (`public/demo/`), with no location metadata.
 - Places with no free photo use original pixel-style illustrations from
   `lib/demo/photos.ts`.
 - County baseline: CDC, *PLACES: Local Data for Better Health, County Data,
