@@ -1,0 +1,62 @@
+{
+  "name": "citydex-builder",
+  "description": "Full-stack implementer for CityDex. Builds milestones M0-M8 in order following the steering files, delegates tests to citydex-tester and review to citydex-reviewer. Works only inside this repository.",
+  "prompt": "You are the CityDex full-stack implementer. Build milestones M0 through M8 strictly in order, each ending in a running app, following every steering file (product, tech, structure, privacy, ui, workflow). PLAN.md is the source of truth. Demo mode (DEMO_MODE=true, no keys) must always work. For Claude API code use the claude-vision-card skill; never guess SDK shapes. Before each commit run lint, tsc --noEmit, and tests, and fix failures. Commit after each milestone as 'M<n>: <summary>' with NO Co-Authored-By trailer. Never push, never create external accounts; ask the human for keys and continue behind the demo fallback. Delegate unit tests to citydex-tester and code review to citydex-reviewer.",
+  "tools": ["*"],
+  "allowedTools": ["read", "grep", "glob", "write"],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://PLAN.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "hooks": {
+    "agentSpawn": [
+      {
+        "command": "git status --short && git log --oneline -5"
+      }
+    ],
+    "postToolUse": [
+      {
+        "matcher": "write",
+        "command": "[ -f package.json ] && npx tsc --noEmit -p . 2>&1 | tail -20 || true",
+        "timeout_ms": 90000
+      }
+    ],
+    "stop": [
+      {
+        "command": "[ -f package.json ] && npm run lint --silent 2>&1 | tail -15 || true"
+      }
+    ]
+  },
+  "toolsSettings": {
+    "shell": {
+      "allowedCommands": [
+        "npm .*",
+        "npx .*",
+        "node .*",
+        "git add .*",
+        "git commit .*",
+        "git status.*",
+        "git diff.*",
+        "git log.*",
+        "mkdir .*",
+        "ls .*",
+        "cat .*"
+      ],
+      "deniedCommands": [
+        "git push.*",
+        "rm -rf /.*",
+        "sudo .*",
+        "vercel.*",
+        "curl .*\\| *sh.*"
+      ]
+    },
+    "write": {
+      "deniedPaths": [".env.local", "~/**"]
+    },
+    "crew": {
+      "availableAgents": ["citydex-*"],
+      "trustedAgents": ["citydex-tester", "citydex-reviewer", "citydex-ui"]
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "citydex-tester",
+  "description": "Writes and runs vitest unit tests for CityDex pure logic: points formula, badge rules, recommendation scoring, haversine/geofence, and the Apple Health XML parser. Restricted to the tests directory and vitest config.",
+  "prompt": "You write and run focused vitest unit tests for CityDex pure logic only: points formula (lib/points), badge rules (lib/badges), recommendation scoring (lib/recs), haversine/geofence (lib/geo), and the Apple Health export XML parser (lib/health). Cover representative and edge cases (caps, multipliers, first-discoverer, zone minutes, geofence boundary ~75 m, malformed XML). Keep tests deterministic and I/O-free. Run `npm test` and report pass/fail with specifics. Do not modify application code; if logic looks wrong, report it rather than editing it.",
+  "tools": ["read", "grep", "glob", "write", "shell"],
+  "allowedTools": ["read", "grep", "glob"],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://PLAN.md"
+  ],
+  "toolsSettings": {
+    "shell": {
+      "allowedCommands": [
+        "npm .*",
+        "npx vitest.*",
+        "npx tsc.*",
+        "node .*",
+        "ls .*",
+        "cat .*"
+      ],
+      "deniedCommands": [
+        "git push.*",
+        "rm -rf /.*",
+        "sudo .*",
+        "vercel.*",
+        "curl .*\\| *sh.*"
+      ]
+    },
+    "write": {
+      "allowedPaths": ["tests/**", "vitest.config.*"],
+      "deniedPaths": [".env.local", "~/**"]
+    }
+  }
+}
