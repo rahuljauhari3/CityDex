@@ -1,9 +1,10 @@
 # CityDex Core — Design
 
 Grounded in `PLAN.md` and `.kiro/steering/*.md`. This document covers the
-architecture, data model, provider adapter, AI card pipeline, the
-points/badges/recommendation algorithms, the demo-mode fallback storage design,
-and the check-in pipeline sequence. Requirement IDs (REQ-n) refer to
+architecture, data model, provider adapter, the place-based stamp card assembly
+(no AI), the points/badges/recommendation algorithms, the place-insight / CDC
+baseline / weekly-summary health features, the demo-mode fallback storage
+design, and the check-in pipeline sequence. Requirement IDs (REQ-n) refer to
 `requirements.md`.
 
 ---
@@ -11,7 +12,8 @@ and the check-in pipeline sequence. Requirement IDs (REQ-n) refer to
 ## 1. Architecture overview
 
 CityDex is a mobile-first Next.js (App Router) + TypeScript PWA with Tailwind.
-All secret-touching code is server-side only.
+All secret-touching code is server-side only. **No AI is used anywhere** — there
+is no model client, no `kiro-cli` subprocess, and no `lib/ai`.
 
 ```
 Browser (mobile, 375×812)
@@ -21,35 +23,37 @@ Browser (mobile, 375×812)
         │  (multipart POST, no secrets)
         ▼
 Next.js server (route handlers / server actions)
-  ├─ /api/stamps        → check-in pipeline (AI card, points, persistence)
+  ├─ /api/stamps        → check-in pipeline (place-based card, points, persist)
   ├─ /api/providers/*   → OAuth connect/callback, Apple export upload
   ├─ /api/leaderboard   → aggregates (never location)
   └─ /api/feed /api/friends /api/kudos
         │
-        ├─ lib/ (pure, testable): geo, points, badges, recs, health parsers
-        ├─ lib/ai/ (server-only): Kiro ACP client (kiro-cli) + mock
+        ├─ lib/ (pure, testable): geo, points, badges, recs, insights, health parsers
         └─ lib/db/ (server-only): Supabase OR demo in-memory/SQLite fallback
         ▼
 Supabase (Postgres + RLS, Auth, Storage `stamps`)  ── OR ──  Demo store
-External: kiro-cli (Kiro, ACP), Strava/WHOOP/Fitbit OAuth, OSM tiles
+External: Strava/WHOOP/Fitbit OAuth, OSM tiles
 ```
 
 Design rules (from `structure.md`):
-- Pure logic lives in `lib/points`, `lib/badges`, `lib/recs`, `lib/geo`, and the
-  Apple Health parser — no I/O, directly unit-testable (REQ-8, 9, 11, 13).
-- Server-only modules (`lib/ai`, provider token handling, `lib/db` service-role
-  paths) are never imported into client components (REQ-4.9, 14.10).
+- Pure logic lives in `lib/points`, `lib/badges`, `lib/recs`, `lib/insights`,
+  `lib/geo`, and the Apple Health parser — no I/O, directly unit-testable
+  (REQ-8, 9, 11, 13, 16, 18).
+- Server-only modules (provider token handling, `lib/db` service-role paths) are
+  never imported into client components (REQ-14.10).
 - Demo fallbacks live beside the real implementation: `lib/health/demo.ts`,
-  `lib/ai/mock.ts`, `lib/db/memory.ts` (REQ-1.6, 1.7, 4.6, 6.2).
-- Validate every external input (API body, AI output, provider response) with
-  `zod` at the boundary.
+  `lib/db/memory.ts` (REQ-1.6, 1.7, 6.2).
+- Validate every external input (API body, provider response) with `zod` at the
+  boundary.
+- **No AI anywhere** (REQ-4.2): the stamp card is assembled from place data + the
+  uploaded photo; there is no `lib/ai`, model call, or `kiro-cli` subprocess.
 
 ### Directory layout (from `structure.md`)
 ```
 app/(routes)/{map,quests,dex,feed,profile,onboarding}
 app/api/{stamps,providers,auth,leaderboard,feed,friends,kudos}
 components/{map,stamp,feed,leaderboard,ui}
-lib/{health,points,badges,recs,geo,ai,db}
+lib/{health,points,badges,recs,insights,geo,db}
 tests/            data/seed/            public/ (manifest, icons, pixel assets)
 ```
 
@@ -58,21 +62,17 @@ tests/            data/seed/            public/ (manifest, icons, pixel assets)
 ## 2. Config and demo-mode resolution (REQ-1)
 
 A single `lib/config.ts` reads env once and exposes typed flags:
-- `isDemoMode = DEMO_MODE === "true"`
+- `isDemoMode` — true unless `DEMO_MODE=false` while Supabase is configured.
 - `hasSupabase = NEXT_PUBLIC_SUPABASE_URL && NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `aiProvider = AI_PROVIDER` (`kiro` | `mock`; default `kiro` if a `kiro-cli`
-  binary is found on `KIRO_CLI_PATH`, else `mock`)
-- `kiroCliPath`, `kiroCardAgent`, `kiroCardTimeoutMs` (ACP card generator config)
 - `hasStrava`, `hasWhoop`, `hasFitbit` similarly.
 
-Selection logic (REQ-1.6, 1.7, 4.6, 6.2):
+Selection logic (REQ-1.6, 1.7, 6.2):
 - DB: `hasSupabase ? supabaseStore : memoryStore`.
-- AI: `aiProvider === "kiro" && kiro-cli available ? kiroAcpCard : mockCard`
-  (ACP path falls back to the CLI path, then to the mock on any failure).
 - Health: always include `demo` provider; add real providers when keys + user
   connection exist.
 
-The app must never crash from a missing key; absence selects the fallback.
+There is **no AI config** (no `AI_PROVIDER`, `KIRO_*`). The app must never crash
+from a missing key; absence selects the fallback.
 
 ---
 
@@ -136,6 +136,8 @@ interface Store {
   getFeed(userId): Promise<FeedItem[]>;
   addKudos(stampId, userId) ;
   awardBadge / listBadges ;
+  getStampsByPlace(userId, placeId): Promise<Stamp[]>;   // for place insights
+  getWeeklyHealth(userId, weekStart): Promise<WeeklySummary>;
   deleteAccount(userId): Promise<void>;
 }
 ```
@@ -197,57 +199,60 @@ polyline; `est_steps = distanceM / strideLengthM` (default 0.7 m), always labele
 
 ---
 
-## 6. AI stamp-card pipeline (REQ-4)
+## 6. Stamp-card assembly — no AI (REQ-4)
 
-Authoritative pattern comes from the `kiro-vision-card` skill; the agent
-implementing `lib/ai` must activate it. Shape summary:
+The stamp card is assembled server-side from the **place** and the uploaded
+photo. There is no model call, no `kiro-cli` subprocess, and no `lib/ai`.
 
-- `StampCardSchema` (zod): `accepted`, `rejectReason`, `name`, `category` enum,
-  `rarity` enum, `lore ≤ 220 chars`, `tags` max 4, `colorHex`.
-- Client resizes to ≤ 1280 px long edge, JPEG ~0.8, strips EXIF (REQ-3.5, 14.8).
-- Server spawns `kiro-cli acp --agent $KIRO_CARD_AGENT` and drives it over the
-  Agent Client Protocol (JSON-RPC 2.0 over stdio): `initialize` → `session/new`
-  → `session/prompt` with the **base64 image content block BEFORE the text
-  block** (`{ type: "image", mimeType, data }`, `data` has no `data:` prefix)
-  (REQ-4.3) → collect `session/update` `agent_message_chunk` text.
-- **CLI fallback** (REQ-4.2): if ACP image input is unavailable, write the photo
-  to an OS temp file and run `kiro-cli chat --no-interactive --agent
-  $KIRO_CARD_AGENT`, pointing the agent at the temp file; delete the temp file
-  afterwards.
-- **Output parsing** (REQ-4.5): extract the first balanced JSON object from the
-  reply and `StampCardSchema.safeParse(...)`; a missing/unparseable/invalid
-  object is treated as a refusal.
-- **Refusal / reject** → generic "Mystery Spot" card; do not store the photo
-  (REQ-4.4). Applies to a `refusal`/`cancelled` stop reason, no parseable JSON,
-  a schema failure, or `accepted === false` (REQ-4.8).
-- **Timeout + kill:** enforce `KIRO_CARD_TIMEOUT_MS` (default 45000); SIGKILL the
-  kiro-cli child on timeout and fall back to the mock; no orphan processes.
-- **Single in-process queue:** only one kiro-cli card job runs at a time.
-- **No kiro-cli / `AI_PROVIDER=mock`** → `lib/ai/mock.ts` deterministic card
-  (REQ-4.6).
-- kiro-cli is spawned **server-side only**, never from the client (REQ-4.9). The
-  app does not use the Anthropic SDK or API.
-- System prompt tone (agent `citydex-cardsmith`): whimsical village naturalist;
-  short, punny, PG; never identify or describe real people; lore is clearly
-  playful, not factual.
+- **Request** (`POST /api/stamps`, multipart): photo + lat/lng/accuracy/routeId,
+  the required `noPeople` checkbox flag, and **either** `placeId` (seeded place)
+  **or** `name` + `category` (new user-created place). Validated with zod at the
+  boundary (REQ-4.1, 4.7).
+- **Photo handling:** client resizes to ≤ 1280 px long edge, JPEG ~0.8, strips
+  EXIF (REQ-3.5, 14.8); the server re-validates and stores the photo **exactly
+  as uploaded** — no pixel/dither filter (REQ-4.5).
+- **Card source** (REQ-4.3, 4.4):
+  - seeded place → `name`, `category`, `rarity` from the place record;
+  - new user-created place (`source=user`) → user-typed `name` + `category`,
+    rarity `common`.
+  - The card has **no `lore` field** and no AI-generated text.
+- **Privacy guard** (REQ-4.6): if `noPeople !== true`, return a 4xx JSON error
+  and store nothing. This checkbox replaces any image analysis.
+- **Card shape** stored in `stamps.card` jsonb:
+```ts
+type StampCard = {
+  name: string;
+  category: "mural"|"statue"|"cafe"|"door"|"park"|"building"
+          |"transit"|"water"|"nature"|"shop"|"oddity"|"other";
+  rarity: "common"|"uncommon"|"rare"|"epic"|"legendary"; // place rarity, adjusted server-side
+  source: "seed"|"user";
+};
+```
+- **Final rarity** (REQ-8.3): the place's rarity, +1 tier for the first 3
+  collectors, capped at "uncommon" when collect_count > 50.
+- Everything here is deterministic and offline, so demo mode works with zero
+  keys (REQ-4.8).
 
 ---
 
 ## 7. Check-in pipeline sequence (REQ-3, 4, 6, 7, 8, 9)
 
-`POST /api/stamps` (multipart: photo, lat, lng, accuracy, routeId):
+`POST /api/stamps` (multipart: photo, lat, lng, accuracy, routeId, noPeople, and
+either placeId or name+category):
 
-1. **Validate input** with zod; reject if GPS accuracy > 50 m (REQ-3.2).
-2. **Resolve place**: within ~75 m of a seeded place → that place; else create a
-   `source=user` place at rounded coords (REQ-3.1, 3.3, 14.4).
+1. **Validate input** with zod; reject if GPS accuracy > 50 m (REQ-3.2); reject
+   with a 4xx and store nothing if `noPeople !== true` (REQ-4.6).
+2. **Resolve place**: `placeId` within ~75 m → that seeded place; else create a
+   `source=user` place at rounded coords from the typed `name` + `category`
+   (REQ-3.1, 3.3, 4.4, 14.4).
 3. **Health snapshot**: merge snapshots from the user's connected providers for
    `[route.started_at … now]`; demo provider if none (REQ-6, 7.3).
-4. **AI card**: run the Kiro ACP pipeline (or CLI fallback / mock). Handle
-   refusal/rejection first;
-   if not accepted, return a retake response and store nothing (REQ-4.4, 4.8).
-5. **EXIF strip + store photo** (only if accepted) to Storage / memory data URL
+4. **Build card** from the place (seeded name/category/rarity, or user-typed
+   name/category + rarity `common`) — no AI, no external process (REQ-4.3, 4.4,
+   4.5, 4.8).
+5. **EXIF strip + store photo** exactly as uploaded to Storage / memory data URL
    (REQ-14.8).
-6. **Final rarity**: AI suggestion, +1 tier for first 3 collectors, capped at
+6. **Final rarity**: place rarity, +1 tier for first 3 collectors, capped at
    "uncommon" when collect_count > 50 (REQ-8.3).
 7. **Points**: compute via `lib/points` using rarity + snapshot + whether the
    place was goal-recommended + repeat-visit flag (REQ-8.1, 8.2).
@@ -259,10 +264,10 @@ implementing `lib/ai` must activate it. Shape summary:
 11. **Respond** with card + stats + points for the reveal animation (REQ-5.1).
 
 ```
-Client ──(photo,coords,routeId)──▶ /api/stamps
-  validate → resolve place → health snapshot → AI card
-  (reject? → retake, store nothing)
-  → strip EXIF + store photo → final rarity → points
+Client ──(photo,coords,routeId,noPeople,placeId|name+category)──▶ /api/stamps
+  validate (accuracy ≤ 50m, noPeople = true) → resolve/create place
+  → health snapshot → build card from place data
+  → strip EXIF + store photo as uploaded → final rarity → points
   → persist stamp/route/place → evaluate badges → update feed/leaderboard
   ◀── card JSON + stats + points ── reveal animation
 ```
@@ -281,8 +286,8 @@ subtotal       = base + firstDiscoverer*(!isRepeatVisit) + movementBonus + effor
 points         = round(subtotal * (goalRecommended ? 1.5 : 1))
 ```
 Repeat visit → rarity base and first-discoverer are 0; movement/effort still
-count (REQ-8.2). Final rarity feeding `rarityBase` is the server-adjusted rarity
-from step 6.
+count (REQ-8.2). Final rarity feeding `rarityBase` is the server-adjusted place
+rarity from step 6.
 
 Pure function: `computePoints(input): number` in `lib/points` (REQ-8, testable).
 
@@ -349,9 +354,9 @@ All pure/testable (REQ-3.6, 7.2).
 Per `ui.md`: Tailwind pixel tokens (Parchment, Wood dark/light, Grass, Sky,
 Berry, activity orange `#FC5200`, rarity colors). Fonts: Pixelify Sans
 (headings/numbers), VT323/Silkscreen (labels), system font for body. Components:
-wooden-panel cards, stamp card with rarity glow + dither photo filter, Dex grid
-with locked silhouettes, Home header (clock/weather chip, day counter, pixel
-rings), Strava-style feed cards, notice-board leaderboard, bottom tab bar
+wooden-panel cards, stamp card with rarity glow and the photo shown as uploaded,
+Dex grid with locked silhouettes, Home header (clock/weather chip, day counter,
+pixel rings), Strava-style feed cards, notice-board leaderboard, bottom tab bar
 (Map · Quests · Dex · Feed · Profile).
 
 Accessibility (REQ-5.4, 14.9): ≥ 16 px body, AA contrast,
@@ -384,6 +389,108 @@ Pure-logic unit tests (per `workflow.md` cadence):
 - `lib/badges` — each rule, streak computation (REQ-9).
 - `lib/recs` — scoring ordering, no-history estimate, reasons (REQ-11).
 - `lib/geo` — haversine, geofence boundary, step estimate, coord rounding (REQ-3,7).
+- `lib/insights` — `computePlaceInsights` pace bucketing + bpm/week trend, min 2
+  points, sample-size reporting (REQ-16); `computeWeeklySummary` aggregation with
+  per-field source (REQ-18).
 - `lib/health/apple` — Apple Health XML parsing of the five HK identifiers (REQ-13).
 
 Before each commit: `npm run lint` → `npx tsc --noEmit` → `npm test`.
+
+---
+
+## 15. Place insights over time (REQ-16)
+
+`lib/insights` pure function:
+
+```ts
+type PlaceInsight = {
+  placeId: string;
+  metric: "hr" | "resting_hr";
+  deltaBpm: number;           // negative = improvement (lower HR at same pace)
+  overWeeks: number;          // span between first and last comparable visit
+  sampleSize: number;         // comparable visits used
+  isDemo: boolean;
+  text: string;               // wellness-worded, e.g. "avg HR ... down 6 bpm ..."
+};
+
+function computePlaceInsights(stamps: Stamp[], placeId: string): PlaceInsight[];
+```
+
+Algorithm:
+1. Filter the user's stamps for `placeId`; each carries a `health_snapshot`
+   (hrAvg, distanceM, route duration → pace) and `created_at`.
+2. **Pace bucketing:** keep only visits whose pace (min/km = duration / distance)
+   is within **±10%** of each other, so HR is compared at a similar effort
+   (REQ-16.1). Visits outside the dominant pace band are dropped.
+3. Require **≥ 2** comparable visits; otherwise emit no insight (REQ-16.2).
+4. **Trend:** fit a simple linear regression of `hrAvg` against time (weeks) over
+   the comparable visits; `deltaBpm = slope × overWeeks` (bpm change across the
+   observed span). Report `sampleSize` (REQ-16.2).
+5. **Resting/recovery:** if snapshots include resting HR / recovery (WHOOP or
+   Apple), compute the same trend for `resting_hr` (REQ-16.3).
+6. **Wording:** wellness language only, no diagnosis; append "based on N visits";
+   label "DEMO" when any contributing snapshot `isDemo` (REQ-16.4, 16.5). Pure /
+   testable (REQ-16.6).
+
+Surfaced as a place-insight card on the place sheet / Profile, under the "not
+medical advice" footer.
+
+---
+
+## 16. CDC PLACES county baseline (REQ-17)
+
+Static bundled dataset `data/cdc-places-suffolk.json` (no network call):
+
+```json
+{
+  "source": "CDC PLACES: Local Data for Better Health, County Data",
+  "sourceUrl": "https://www.cdc.gov/places/",
+  "county": "Suffolk County, MA",
+  "dataYear": "2023",
+  "releaseYear": 2024,
+  "indicators": [
+    { "id": "LPA", "label": "No leisure-time physical activity", "valuePct": 00.0 },
+    { "id": "OBESITY", "label": "Obesity among adults", "valuePct": 00.0 },
+    { "id": "SLEEP", "label": "Short sleep duration", "valuePct": 00.0 },
+    { "id": "GHLTH", "label": "Fair or poor general health", "valuePct": 00.0 }
+  ]
+}
+```
+
+- The human/seed step fills in the real indicator values from CDC PLACES; values
+  above are placeholders.
+- Profile shows **one** card combining a county indicator with the user's own
+  week, e.g. "In Suffolk County, X% of adults report no leisure-time physical
+  activity. This week you logged N active minutes." (REQ-17.3).
+- The card cites CDC PLACES and shows the `dataYear` (REQ-17.2, 17.4), with
+  wellness wording and the "not medical advice" footer (REQ-17.5).
+
+---
+
+## 17. Weekly health summary (REQ-18)
+
+`lib/insights` pure aggregation:
+
+```ts
+type WeeklySummary = {
+  weekStart: string;                       // ISO, Monday 00:00 America/New_York
+  steps: { value: number; source: SourceLabel };
+  activeKcal: { value: number; source: SourceLabel };
+  zone2PlusMin: { value: number; source: SourceLabel };
+  spo2Avg?: { value: number; source: SourceLabel };
+  goalProgress: { type: GoalType; value: number; target: number; pct: number }[];
+};
+type SourceLabel = "DEMO" | "strava" | "apple" | "est.";
+
+function computeWeeklySummary(
+  stamps: Stamp[], goals: Goal[], weekStart: Date,
+): WeeklySummary;
+```
+
+- Sums the week's health snapshots for steps, active kcal and zone-2+ minutes,
+  and averages SpO₂ when present (REQ-18.1).
+- Records the dominant **source** per field (prefer real device over estimate),
+  surfaced as a per-value label (REQ-18.2).
+- Computes progress against each active weekly goal (REQ-18.3).
+- Rendered on Profile under the "not medical advice" footer (REQ-18.4); pure /
+  testable (REQ-18.5).

@@ -14,17 +14,16 @@ inclusion: always
   `stamps` for photos, Row Level Security on every table).
 - **Map:** `react-leaflet` + OpenStreetMap tiles. Keep the © OpenStreetMap
   attribution visible. Pixel-styled custom markers.
-- **AI:** **Kiro only.** The app does NOT use the Anthropic SDK or API. The
-  Next.js server talks to Kiro through the **Agent Client Protocol (ACP)** by
-  spawning `kiro-cli acp --agent citydex-cardsmith` (JSON-RPC 2.0 over stdio).
-  A CLI fallback (`kiro-cli chat --no-interactive`) and a deterministic mock
-  cover the cases where ACP image input or kiro-cli itself is unavailable.
-  Server-side only; kiro-cli is never spawned from the client.
-- **Validation:** `zod` everywhere (API inputs, AI output, provider responses).
+- **AI:** **None.** The app uses **no AI anywhere** — no Anthropic SDK or API,
+  no Kiro ACP card generation, no `kiro-cli` subprocess. The stamp's name,
+  category and rarity come from the place (seed data) or, for a new
+  user-created place, the name + category the user types (rarity `common`); the
+  photo is shown exactly as uploaded.
+- **Validation:** `zod` everywhere (API inputs, provider responses).
 - **Geo math:** haversine in TypeScript (PostGIS optional, not needed at demo
   scale).
 - **Tests:** `vitest` for pure logic (points, badges, recs, haversine/geofence,
-  Apple Health XML parser).
+  place-insight trend, weekly summary aggregation, Apple Health XML parser).
 
 ## Demo mode must ALWAYS work (hard rule)
 
@@ -32,11 +31,11 @@ With only `DEMO_MODE=true` and **no API keys**, the full flow (map → check-in 
 photo → card → points → leaderboard) must run end to end:
 
 - Use the **demo health provider** (seeded synthetic snapshots, labeled "DEMO").
-- Use a **deterministic mock card generator** when `AI_PROVIDER=mock` or
-  `kiro-cli` is not available (see the `kiro-vision-card` skill).
+- Build the stamp card from **place data + the uploaded photo** (no AI, no
+  external process).
 - Fall back to in-memory / SQLite data when Supabase is not configured.
-- Real keys / a logged-in `kiro-cli` switch on the real integrations; their
-  absence never breaks the demo.
+- Real keys switch on the real integrations (Strava, Apple Health export,
+  WHOOP, Fitbit); their absence never breaks the demo.
 
 ## Environment variables
 
@@ -46,10 +45,6 @@ Commit `.env.example`; never commit `.env.local`.
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-AI_PROVIDER=kiro            # kiro | mock (default: kiro if kiro-cli is found, else mock)
-KIRO_CLI_PATH=kiro-cli      # path to the kiro-cli binary (default "kiro-cli")
-KIRO_CARD_AGENT=citydex-cardsmith   # agent spawned for card generation
-KIRO_CARD_TIMEOUT_MS=45000  # per-card timeout before the process is killed
 STRAVA_CLIENT_ID=
 STRAVA_CLIENT_SECRET=
 WHOOP_CLIENT_ID=
@@ -60,40 +55,25 @@ APP_URL=http://localhost:3000
 DEMO_MODE=true
 ```
 
-## Kiro ACP card generator (PLAN.md §6) — do not guess the protocol shapes
+## Stamp card generation — no AI (PLAN.md §6)
 
-Use the `kiro-vision-card` skill for the exact message sequence. The app's AI
-runtime is Kiro itself, reached from the Next.js server over the Agent Client
-Protocol (ACP, JSON-RPC 2.0 over stdio). Key rules:
+The stamp card is assembled server-side from the **place** and the uploaded
+photo; there is no model call and no `kiro-cli` subprocess.
 
-- **Transport (primary):** spawn `kiro-cli acp --agent $KIRO_CARD_AGENT` and
-  drive it over stdio: `initialize` → `session/new` → `session/prompt` with an
-  **image content block before the text block**
-  (`{ type: "image", mimeType, data }` where `data` is base64, no `data:`
-  prefix) → collect `session/update` `agent_message_chunk` text → parse JSON.
-- **CLI fallback:** if ACP image input is unavailable, write the photo to a
-  temp file and run `kiro-cli chat --no-interactive --agent $KIRO_CARD_AGENT`,
-  pointing the agent at the temp file to read.
-- **Mock fallback:** if `AI_PROVIDER=mock` or `kiro-cli` is unavailable/fails,
-  use the deterministic mock card generator (demo mode always works).
-- **Output parsing:** extract the first JSON object from the agent's reply and
-  `StampCardSchema.safeParse(...)` it. On parse failure, treat as a refusal.
-- **Refusal / reject handling:** if the agent refuses, returns no parseable
-  JSON, or sets `accepted === false`, fall back to a generic "Mystery Spot"
-  card and do NOT store the photo.
-- **Timeout + kill:** enforce `KIRO_CARD_TIMEOUT_MS` (default 45000); kill the
-  kiro-cli process on timeout and fall back to the mock.
-- **Single in-process queue:** only one kiro-cli card job runs at a time; new
-  requests queue behind the active job.
-- **Secrets & client boundary:** kiro-cli is spawned **server-side only** and
-  never from the client. Provider tokens stay server-side. Resize photos
-  client-side (≤ 1280 px long edge, JPEG ~0.8) and strip EXIF location before
-  the photo reaches the agent or storage.
-
-**Deployment limitation:** the server must run on a machine where `kiro-cli` is
-installed and logged in (a long-running Node host, container, or local dev box),
-**not** a serverless/Vercel function. Demo mode still works everywhere via the
-mock card generator.
+- `POST /api/stamps` (multipart): photo + lat/lng/accuracy/routeId, plus either
+  `placeId` for a seeded place, or `name` + `category` for a new user-created
+  place.
+- **Card source:** a **seeded place** supplies its stored name, category and
+  rarity; a **new user-created place** (`source=user`) uses the user-typed name
+  and category with rarity `common`. There is no `lore` field.
+- The photo is stored and shown **exactly as uploaded** — no pixel/dither filter.
+- **Final rarity** = the place's rarity adjusted by collector count (first 3
+  collectors +1 tier; >50 collectors capped at "uncommon").
+- **Privacy guard:** require the checkbox **"No people are the main subject of
+  this photo"**. If it is not set, the server returns a 4xx and does **not**
+  store the photo. This checkbox replaces any image analysis.
+- Resize photos client-side (≤ 1280 px long edge, JPEG ~0.8) and strip EXIF
+  location before the photo reaches storage.
 
 ## Provider adapter interface (PLAN.md §4)
 

@@ -1,8 +1,9 @@
 # CityDex Core — Requirements
 
 Source of truth: `PLAN.md` and `.kiro/steering/*.md`. This document captures the
-P0 and P1 features plus the privacy requirements as EARS-style user stories with
-numbered acceptance criteria. Requirement IDs are stable and referenced from
+P0 and P1 features, the privacy requirements, and the health-focused P2 features
+now pulled into scope (place insights, CDC baseline), as EARS-style user stories
+with numbered acceptance criteria. Requirement IDs are stable and referenced from
 `design.md` and `tasks.md`.
 
 EARS keywords used: **WHEN** (event), **WHILE** (state), **IF/THEN** (conditional),
@@ -78,38 +79,33 @@ implementation.
 
 ---
 
-## REQ-4: AI stamp card generation (P0)
+## REQ-4: Stamp card from place + photo — no AI (P0)
 
-**User story:** As a user, I want my photo turned into a collectible card with a
-name, rarity, and funny lore, so collecting feels rewarding.
+**User story:** As a user, I want my photo turned into a collectible card whose
+name, category and rarity come from the place, so collecting feels rewarding
+without any AI.
 
 ### Acceptance criteria
-4.1 WHEN a photo is submitted to `POST /api/stamps` (multipart: photo, lat, lng,
-accuracy, routeId), THE SYSTEM SHALL process it server-side only.
-4.2 THE SYSTEM SHALL generate the card through Kiro over the Agent Client
-Protocol by spawning `kiro-cli acp --agent $KIRO_CARD_AGENT` and driving it
-`initialize` → `session/new` → `session/prompt` → collecting `session/update`
-`agent_message_chunk` text, with a `kiro-cli chat --no-interactive --agent
-$KIRO_CARD_AGENT` CLI fallback (photo written to an OS temp file) WHERE ACP
-image input is unavailable. THE SYSTEM SHALL NOT use the Anthropic SDK or API.
-4.3 THE SYSTEM SHALL place the base64 `image` content block (`{ type: "image",
-mimeType, data }`, `data` without a `data:` prefix) BEFORE the text block in the
-`session/prompt` content.
-4.4 IF the agent refuses (a `refusal`/`cancelled` stop reason), returns no
-parseable JSON, or fails schema validation, THEN THE SYSTEM SHALL fall back to a
-generic "Mystery Spot" card and SHALL NOT store the photo.
-4.5 THE SYSTEM SHALL extract the first balanced JSON object from the agent reply
-and validate it with `StampCardSchema.safeParse(...)` before use.
-4.6 WHERE `AI_PROVIDER=mock` or `kiro-cli` is unavailable, THE SYSTEM SHALL use a
-deterministic mock card generator per the `kiro-vision-card` skill.
-4.7 THE SYSTEM SHALL validate the AI output against `StampCardSchema` (accepted,
-rejectReason, name, category, rarity, lore ≤ 220 chars, tags max 4, colorHex).
-4.8 IF `accepted === false` (person as main subject, screen, private interior, or
-unrecognizable), THEN THE SYSTEM SHALL NOT store the photo and SHALL prompt the
-user to retake.
-4.9 THE SYSTEM SHALL spawn `kiro-cli` server-side only (never from the client),
-enforce `KIRO_CARD_TIMEOUT_MS` (killing the process on timeout), run a single
-in-process card-job queue, and delete any CLI-fallback temp image file after use.
+4.1 WHEN a check-in is submitted to `POST /api/stamps` (multipart: photo, lat,
+lng, accuracy, routeId, and either `placeId` for a seeded place or `name` +
+`category` for a new user-created place, plus the "no people" checkbox flag),
+THE SYSTEM SHALL process it server-side only.
+4.2 THE SYSTEM SHALL use **no AI anywhere** — no Anthropic SDK or API, no Kiro
+ACP card generation, and no `kiro-cli` subprocess.
+4.3 WHERE the check-in targets a **seeded place**, THE SYSTEM SHALL build the
+card from that place's stored `name`, `category` and `rarity`.
+4.4 WHERE the check-in creates a **new user-created place** (`source=user`), THE
+SYSTEM SHALL use the user-typed `name` and `category` with rarity `common`.
+4.5 THE SYSTEM SHALL store and display the photo **exactly as uploaded** (no
+pixel/dither filter, no AI-generated name or lore); there is no `lore` field.
+4.6 THE SYSTEM SHALL require the **"No people are the main subject of this
+photo"** checkbox; IF it is not set, THEN THE SYSTEM SHALL return a 4xx JSON
+error and SHALL NOT store the photo.
+4.7 THE SYSTEM SHALL validate the request body with zod at the boundary
+(coordinates, accuracy, the checkbox flag, and either `placeId` or
+`name` + `category`).
+4.8 THE SYSTEM SHALL assemble the card deterministically with no external
+process or network model call, so demo mode works with zero keys.
 
 ---
 
@@ -120,8 +116,8 @@ collection, so I can see and revisit what I've found.
 
 ### Acceptance criteria
 5.1 WHEN a stamp is created, THE SYSTEM SHALL present a card-reveal animation: a
-parchment card with a rarity-colored frame glow, the photo with a pixelation/
-dither filter, the name in a pixel font, lore in italics, and a stats row with
+parchment card with a rarity-colored frame glow, the photo shown exactly as
+uploaded, the name in a pixel font, a category label, and a stats row with
 orange numbers.
 5.2 THE SYSTEM SHALL render the Dex as a 4-column mobile inventory grid.
 5.3 THE SYSTEM SHALL render undiscovered nearby places as locked dark silhouettes
@@ -182,9 +178,9 @@ zone-2+ minute, cap +60), with a ×1.5 multiplier WHERE the place is
 goal-recommended.
 8.2 WHERE the check-in is a repeat visit to the same place, THE SYSTEM SHALL award
 0 rarity base and apply only movement and effort bonuses.
-8.3 THE SYSTEM SHALL compute final rarity as the AI suggestion adjusted +1 tier for
-the first 3 collectors of a place, and capped at "uncommon" when a place has > 50
-collectors.
+8.3 THE SYSTEM SHALL compute final rarity as the place's rarity adjusted +1 tier
+for the first 3 collectors of a place, and capped at "uncommon" when a place has
+> 50 collectors.
 8.4 THE SYSTEM SHALL provide a global leaderboard with This-week and All-time views
 and Steps / Points / Stamps metrics.
 8.5 THE SYSTEM SHALL reset weekly leaderboards Monday 00:00 America/New_York.
@@ -301,7 +297,10 @@ when the user turns it on.
 14.6 WHEN a route is shared, THE SYSTEM SHALL blur the first and last 200 m
 (home-zone blur).
 14.7 THE SYSTEM SHALL NEVER show location or routes on leaderboards.
-14.8 THE SYSTEM SHALL strip EXIF (including location) from photos before storing.
+14.8 THE SYSTEM SHALL strip EXIF (including location) from photos before storing,
+store and display the photo exactly as uploaded, and require the "No people are
+the main subject of this photo" checkbox (returning a 4xx and storing nothing if
+it is unset).
 14.9 THE SYSTEM SHALL show a "Not medical advice" footer on every health screen and
 use wellness language only.
 14.10 THE SYSTEM SHALL encrypt provider tokens at rest (AES-GCM with a server key or
@@ -328,3 +327,64 @@ snapshots, badges, kudos).
 errors in demo mode at a 375×812 viewport.
 15.4 THE SYSTEM SHALL keep a `README.md` with setup, env vars, demo-mode run steps,
 data-source citations, and known limitations.
+
+---
+
+## REQ-16: Place insights over time (P2 → now in scope)
+
+**User story:** As a user who revisits places, I want to see how my body responds
+to the same place over time, so I get personal wellness insight — never a
+diagnosis.
+
+### Acceptance criteria
+16.1 WHERE a user has visited a place at least twice, THE SYSTEM SHALL compare
+heart rate across visits **at a similar pace** (pace within ±10% of each other)
+and surface a wellness-worded insight card (e.g. "Your avg HR on the Esplanade
+loop is down 6 bpm over 2 weeks at the same pace").
+16.2 THE SYSTEM SHALL require at least 2 comparable data points and SHALL show
+the sample size in the insight (e.g. "based on 4 visits").
+16.3 WHERE WHOOP or Apple data provide resting HR / recovery, THE SYSTEM SHALL
+also show a resting/recovery trend.
+16.4 THE SYSTEM SHALL use wellness wording only, with **no diagnosis** and the
+"not medical advice" footer.
+16.5 THE SYSTEM SHALL label insights computed from demo data "DEMO".
+16.6 THE SYSTEM SHALL implement the insight computation as a pure function
+(`computePlaceInsights(stamps, placeId)`) testable without I/O.
+
+---
+
+## REQ-17: County health baseline card — CDC PLACES (P2 → now in scope)
+
+**User story:** As a user, I want to see how my activity compares to my county's
+public-health baseline, so my movement has context — framed as wellness, not
+medical advice.
+
+### Acceptance criteria
+17.1 THE SYSTEM SHALL ship CDC PLACES (Suffolk County, MA) baseline indicators
+relevant to activity (e.g. physical inactivity %, obesity %, short sleep %,
+fair/poor health %) as a static bundled file `data/cdc-places-suffolk.json`.
+17.2 THE SYSTEM SHALL record in that file the source URL, release year, and a
+"data year" label.
+17.3 THE SYSTEM SHALL show one card on Profile, e.g. "In Suffolk County, X% of
+adults report no leisure-time physical activity. This week you logged N active
+minutes."
+17.4 THE SYSTEM SHALL cite CDC PLACES and show the data year on the card.
+17.5 THE SYSTEM SHALL use wellness wording only and show the "not medical advice"
+footer; it SHALL NOT present the baseline as a personal clinical assessment.
+
+---
+
+## REQ-18: Weekly health summary on Profile (P1)
+
+**User story:** As a user, I want a weekly summary of my health metrics and goal
+progress, so the app's health purpose is front and center.
+
+### Acceptance criteria
+18.1 THE SYSTEM SHALL show on Profile a weekly health summary with steps, active
+kcal, zone-2+ minutes, and avg SpO₂ when available.
+18.2 THE SYSTEM SHALL show the source of each value (DEMO / Strava / Apple /
+est.).
+18.3 THE SYSTEM SHALL show progress against the user's active goals for the week.
+18.4 THE SYSTEM SHALL carry the "not medical advice" footer.
+18.5 THE SYSTEM SHALL implement the weekly aggregation as a pure function
+testable without I/O.

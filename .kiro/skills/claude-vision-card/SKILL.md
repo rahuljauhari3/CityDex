@@ -1,19 +1,15 @@
 ---
 name: claude-vision-card
-description: DEPRECATED AND REMOVED. CityDex no longer uses the Anthropic SDK or API. All AI runs through Kiro over the Agent Client Protocol. Use the kiro-vision-card skill instead.
+description: DELETED. CityDex uses no AI anywhere. The stamp-card generator has been removed; the stamp is built from place data + the uploaded photo. Do not use this skill.
 ---
 
-# DEPRECATED — replaced by `kiro-vision-card`
+# DELETED — CityDex uses no AI
 
-CityDex's AI runtime is **Kiro only**. The Anthropic SDK / API are no longer
-used anywhere in the app. Do not follow any Anthropic `messages.parse` /
-`zodOutputFormat` pattern.
+The Anthropic SDK / API were already removed; now the entire AI stamp-card
+generator is gone too. CityDex calls no model, SDK, or `kiro-cli` subprocess.
+The stamp card is assembled from place data (seed data, or a user-typed name +
+category for a new place) and the uploaded photo shown exactly as uploaded.
 
-**Use the [`kiro-vision-card`](../kiro-vision-card/SKILL.md) skill** for the
-stamp-card generator: spawn `kiro-cli acp --agent citydex-cardsmith`, send an
-image content block before the text block over the Agent Client Protocol, with a
-`kiro-cli chat --no-interactive` CLI fallback and a deterministic mock.
-
-> This folder is a tombstone. It should be deleted from the repository
-> (`rm -rf .kiro/skills/claude-vision-card`); it is retained only because the
-> configuring agent lacks a delete tool.
+> This folder is a tombstone. Delete it from the repository:
+> `rm -rf .kiro/skills/claude-vision-card`. It is retained only because the
+> configuring agent lacked a delete tool.

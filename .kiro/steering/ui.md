@@ -25,8 +25,8 @@ branding.
 - Wooden-panel cards: chunky 2–4 px borders, stepped pixel `box-shadow`,
   `image-rendering: pixelated` on sprites.
 - **Stamp card:** parchment card, rarity-colored frame with a glow animation,
-  photo with a subtle pixelation/dither filter, name in a pixel font, lore in
-  italics, stats row with orange numbers.
+  the photo shown as uploaded, name in a pixel font, a category label, a stats
+  row with orange numbers.
 - **Dex / Collection book:** inventory grid (4 columns on mobile), locked slots
   as dark silhouettes with "???".
 - **Home header:** in-game clock + weather chip, day counter ("Day 12 of your

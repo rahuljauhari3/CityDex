@@ -23,12 +23,11 @@ violation as a build failure.
 ## Photos
 - Resize client-side (≤ 1280 px long edge, JPEG ~0.8) and strip EXIF (including
   location) before the photo leaves the browser.
-- The photo is sent to the Kiro card agent (`citydex-cardsmith`) over ACP
-  server-side only for card generation; it is EXIF-stripped before storage.
-- Reject photos where a person is the main subject (agent `accepted === false`,
-  or a refusal / unparseable card): do **not** store the photo; ask the user to
-  retake. For the CLI fallback, the temp image file is deleted immediately after
-  the card is generated.
+- The photo is stored and shown **exactly as uploaded** (no AI, no pixel/dither
+  filter); it is EXIF-stripped before storage.
+- Require a **"No people are the main subject of this photo"** checkbox at
+  check-in. If it is not set, the server returns a 4xx and does **not** store
+  the photo. This checkbox replaces any image analysis.
 
 ## Health data honesty
 - "Not medical advice" footer on every health screen. Wellness language only;
@@ -45,5 +44,5 @@ violation as a build failure.
 
 ## Secrets
 - All provider tokens stay server-side only; never shipped to the client.
-- `kiro-cli` is spawned server-side only (never from the client), and the app
-  does not use the Anthropic SDK or API.
+- The app uses **no AI** — no Anthropic SDK or API, and no `kiro-cli`
+  subprocess.

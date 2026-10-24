@@ -1,10 +1,13 @@
 # CityDex — Build Plan
 
-> A mobile web app that turns walking and running around a city into a collecting game.
-> You move, find interesting real-world spots (murals, statues, cafés, weird doors), photograph them,
-> and AI turns each one into a collectible **stamp card** with a name, rarity, and short funny lore.
-> Your smartwatch health data (steps, heart rate, calories, SpO₂) powers points, tags, leaderboards,
-> and place recommendations that help you hit your health goals.
+> A mobile web app that turns wearable health data into better self-care by making movement around a
+> city rewarding. **Health is the point:** every check-in captures a health snapshot (steps, heart rate
+> and zones, active calories, SpO₂) and feeds a weekly health summary, goals and progress rings,
+> goal-based recommendations, and place insights over time ("HR on this loop down 6 bpm over 2 weeks").
+> The collecting game is the motivation layer: you find interesting real-world spots (murals, statues,
+> cafés, weird doors), photograph them, and each becomes a collectible **stamp card** whose name,
+> category and rarity come from the place (seed data, or a name + category you pick for a new place).
+> No AI is used anywhere in the app.
 
 - **Hackathon:** Hackachusetts 2026 — https://hackachusetts2026.vercel.app/#/healthcare
 - **Primary track:** Healthcare & Biotech → **H1: Turning wearable data into better healthcare**
@@ -43,14 +46,14 @@ Wellness insights only, never medical advice. The hackathon page itself says "Cl
    4. **Consent screen:** explain exactly what is stored (location of check-ins, health snapshot, photo) and that leaderboards never show location.
 2. **Home / Map:** your position, nearby places (pins colored by rarity), recommended places for today's goals, and goal progress rings.
 3. **Go to a place.** The app tracks the walk or run in the browser with the Geolocation API (distance, duration, route).
-4. **Arrive (geofence ≈ 75 m) → "Collect!"** The app prompts for a photo using the camera input.
+4. **Arrive (geofence ≈ 75 m) → "Collect!"** The app prompts for a photo using the camera input, and shows a required checkbox: "No people are the main subject of this photo".
 5. **Check-in pipeline (server):**
    1. Verify location (GPS accuracy ≤ 50 m, within the geofence, or a new place at the current coordinates).
    2. Pull a **health snapshot** from connected providers for the window `[route start … now]`: steps, average and max HR, HR zones, calories, SpO₂ if available.
-   3. Send the photo to Kiro (ACP vision) → stamp card JSON (name, category, rarity, lore, tags).
+   3. Store the photo exactly as uploaded (resized ≤ 1280 px, EXIF/location stripped) and build the stamp from the **place**: a seeded place supplies its name, category and rarity; a new user-created place uses the name + category the user typed, rarity `common`.
    4. Compute points: rarity base + health bonus + first-discoverer bonus.
    5. Save the stamp; update tags and badges, the leaderboards and the feed.
-6. **Card reveal:** a pixel-art card flips over with a rarity glow, lore, stats ("1.8 km · 2,340 steps · avg 128 bpm · 142 kcal") and the points earned.
+6. **Card reveal:** a pixel-art card flips over with a rarity glow, the photo as uploaded, stats ("1.8 km · 2,340 steps · avg 128 bpm · 142 kcal") and the points earned.
 7. **Share to friends:** the stamp shows in the friends feed (Strava-style), and friends can give it a "high five" (kudos).
 
 ---
@@ -60,8 +63,8 @@ Wellness insights only, never medical advice. The hackathon page itself says "Cl
 | Priority | Feature | Notes |
 |---|---|---|
 | **P0** | Map with places + live position | react-leaflet + OpenStreetMap tiles (attribution required) |
-| **P0** | Check-in with geofence + photo capture | `<input type="file" accept="image/*" capture="environment">` |
-| **P0** | AI stamp card from the photo | Kiro vision (ACP) + structured output (section 6) |
+| **P0** | Check-in with geofence + photo capture | `<input type="file" accept="image/*" capture="environment">`; required "no people" checkbox |
+| **P0** | Stamp card from place + photo | Name/category/rarity from the place (seed data) or a user-typed name + category for a new place; photo shown as uploaded. No AI. |
 | **P0** | Collection book ("Dex") | Inventory-grid UI, locked silhouettes for undiscovered nearby places |
 | **P0** | Demo health provider | Seeded realistic data so the demo works with no watch (labeled DEMO) |
 | **P0** | Points + global leaderboard | Weekly and all-time; steps, points, stamps |
@@ -129,8 +132,8 @@ At check-in, merge snapshots from all connected providers. Prefer real device da
 - **Backend:** Next.js route handlers / server actions.
 - **Database / Auth / Storage:** Supabase (Postgres, Auth, Storage bucket `stamps` for photos, Row Level Security on every table).
 - **Map:** `react-leaflet` + OpenStreetMap tiles (keep the © OpenStreetMap attribution visible). Pixel-styled custom markers.
-- **AI:** **Kiro only** — the app does **not** use the Anthropic SDK or API. The Next.js server reaches Kiro over the **Agent Client Protocol (ACP, JSON-RPC 2.0 over stdio)** by spawning `kiro-cli acp --agent citydex-cardsmith` (section 6). A `kiro-cli chat --no-interactive` CLI fallback and a deterministic mock cover the cases where ACP image input or kiro-cli itself is unavailable. Server-side only; kiro-cli is never spawned from the client. Use the `kiro-vision-card` skill for the exact message sequence. Do not guess protocol shapes.
-- **Validation:** `zod` everywhere (API inputs, AI output, provider responses).
+- **AI:** **None.** The app uses **no AI anywhere** — no Anthropic SDK or API, no Kiro ACP card generation, no `kiro-cli` subprocess. The stamp's name, category and rarity come from the place (seed data) or the user's typed name + category for a new place; the photo is shown exactly as uploaded.
+- **Validation:** `zod` everywhere (API inputs, provider responses).
 - **Geo math:** haversine in TypeScript (PostGIS is optional; not needed for the demo scale).
 
 ### Environment variables (`.env.local`, with `.env.example` committed)
@@ -138,10 +141,6 @@ At check-in, merge snapshots from all connected providers. Prefer real device da
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-AI_PROVIDER=kiro            # kiro | mock (default: kiro if kiro-cli is found, else mock)
-KIRO_CLI_PATH=kiro-cli      # path to the kiro-cli binary (default "kiro-cli")
-KIRO_CARD_AGENT=citydex-cardsmith   # agent spawned for card generation
-KIRO_CARD_TIMEOUT_MS=45000  # per-card timeout before the process is killed
 STRAVA_CLIENT_ID=
 STRAVA_CLIENT_SECRET=
 WHOOP_CLIENT_ID=
@@ -149,33 +148,23 @@ WHOOP_CLIENT_SECRET=
 FITBIT_CLIENT_ID=
 FITBIT_CLIENT_SECRET=
 APP_URL=http://localhost:3000
-DEMO_MODE=true        # seeds demo users + demo health provider, mock AI card if AI_PROVIDER=mock or kiro-cli unavailable
+DEMO_MODE=true        # seeds demo users + demo health provider
 ```
-**The app must run end to end with only `DEMO_MODE=true`.** With no keys and no `kiro-cli`, use a local mock for the AI card and in-memory or SQLite fallback data if Supabase is not configured. That's what keeps the hackathon demo safe.
+**The app must run end to end with only `DEMO_MODE=true`.** With no keys, use in-memory or SQLite fallback data if Supabase is not configured. That's what keeps the hackathon demo safe.
 
 ---
 
-## 6. AI stamp card generation (Kiro)
+## 6. Stamp card generation (no AI)
 
-- **Endpoint:** `POST /api/stamps` (multipart: photo, lat, lng, accuracy, routeId).
+- **Endpoint:** `POST /api/stamps` (multipart: photo, lat, lng, accuracy, routeId; plus `placeId` for a seeded place, or `name` + `category` for a new user-created place).
 - Resize the photo client-side to ≤ 1280 px long edge, JPEG ~0.8, before upload. Strip EXIF location before storing.
-- **Runtime:** **Kiro over the Agent Client Protocol (ACP, JSON-RPC 2.0 over stdio).** The Next.js server spawns `kiro-cli acp --agent citydex-cardsmith` and drives it: `initialize` → `session/new` → `session/prompt` with the **base64 image content block before the text block** (`{ type: "image", mimeType, data }`, `data` has no `data:` prefix) → collect `session/update` `agent_message_chunk` text → extract the first JSON object and `StampCardSchema.safeParse(...)` it. **CLI fallback:** if ACP image input is unavailable, write the photo to an OS temp file and run `kiro-cli chat --no-interactive --agent citydex-cardsmith`, pointing the agent at that file. **Mock fallback:** if `AI_PROVIDER=mock` or kiro-cli is unavailable/fails, use a deterministic mock card. Refusal, no parseable JSON, a schema failure, or `accepted === false` → generic "Mystery Spot" card (do not store the photo). Enforce `KIRO_CARD_TIMEOUT_MS` (kill the process on timeout) and a single in-process queue (one card job at a time). The app does **not** use the Anthropic SDK or API. Use the `kiro-vision-card` skill for the exact message sequence. Do not guess protocol shapes.
-- **Schema:**
-```ts
-const StampCardSchema = z.object({
-  accepted: z.boolean(),               // false if the photo's main subject is a person, a screen, private property interior, or unrecognizable
-  rejectReason: z.string().nullable(),
-  name: z.string(),                    // e.g. "The Door That Judges You"
-  category: z.enum(["mural","statue","cafe","door","park","building","transit","water","nature","shop","oddity","other"]),
-  rarity: z.enum(["common","uncommon","rare","epic","legendary"]),  // AI suggestion; final rarity adjusted server-side
-  lore: z.string(),                    // ≤ 220 chars, funny, kind, no claims about real people
-  tags: z.array(z.string()).max(4),    // e.g. ["red-brick","cozy","historic"]
-  colorHex: z.string(),                // dominant color for card frame tint
-});
-```
-- **System prompt tone:** a whimsical village naturalist cataloging city curiosities. Short, punny, PG. Never identify or describe real people. Never invent historical facts as true (lore is clearly playful).
-- **Final rarity** = AI suggestion, adjusted by how many users already hold a stamp at this place (first 3 collectors get +1 tier; places with >50 collectors drop to max "uncommon").
-- **Privacy guard:** if `accepted === false` (for example, a selfie or a person as the main subject), don't store the photo. Ask the user to retake.
+- Require a checkbox **"No people are the main subject of this photo"**; the server rejects the check-in if it is not set.
+- **Card source:** the stamp's `name`, `category` and `rarity` come from the **place**:
+  - a **seeded place** supplies its stored name, category and rarity;
+  - a **new user-created place** (`source=user`) uses the name + category the user typed, with rarity `common`.
+- The photo is stored and shown **exactly as uploaded** (no pixel/dither filter, no AI-generated name or lore). There is no `lore` field.
+- **Final rarity** = the place's rarity, adjusted by how many users already hold a stamp at this place (first 3 collectors get +1 tier; places with >50 collectors drop to max "uncommon").
+- **Privacy guard:** the required "no people" checkbox replaces any image analysis. If the checkbox is not set, the server returns a 4xx and does not store the photo.
 
 ---
 
@@ -238,7 +227,7 @@ Original artwork only. Don't copy any game's sprites, fonts or logos, or use Str
   - Rarity colors: common gray `#9E9E9E`, uncommon green `#4CAF50`, rare blue `#2196F3`, epic purple `#9C27B0`, legendary gold `#FFC107`
 - **Components:**
   - Wooden-panel cards with chunky 2–4 px borders and pixel shadows (`box-shadow` stepped, `image-rendering: pixelated` on sprites)
-  - **Stamp card:** parchment card, rarity-colored frame with a glow animation, photo with a subtle pixelation/dither filter, name in a pixel font, lore in italics, stats row with orange numbers
+  - **Stamp card:** parchment card, rarity-colored frame with a glow animation, the photo shown as uploaded, name in a pixel font, category label, stats row with orange numbers
   - **Dex / Collection book:** inventory grid (4 columns on mobile), locked slots as dark silhouettes with "???"
   - **Home header:** in-game-style clock and weather chip, day counter ("Day 12 of your journey"), goal progress rings drawn as pixel hearts/energy bars
   - **Feed:** Strava-style activity cards (avatar, route mini-map, distance · time · kcal · avg HR, stamp thumbnail, high-five button)
@@ -278,7 +267,7 @@ leaderboard_weekly (materialized view or SQL view: user_id, week_start, steps, p
 - Explicit opt-in per health provider. Show which fields are pulled. A disconnect button deletes the tokens.
 - Store check-in coordinates rounded to ~10 m. Routes are private by default; the feed shows a mini-map only if the user turns it on. **Home-zone blur:** hide the first and last 200 m of shared routes.
 - No location or route on leaderboards, ever.
-- Photos: strip EXIF. Reject photos where a person is the main subject.
+- Photos: strip EXIF. Require a "No people are the main subject of this photo" checkbox; reject the check-in if it is not set.
 - "Not medical advice" footer on every health screen. Wellness language only.
 - Label all demo, synthetic and estimated data clearly ("DEMO", "est.").
 - Account deletion removes photos, stamps, snapshots and tokens.
@@ -291,7 +280,7 @@ leaderboard_weekly (materialized view or SQL view: user_id, week_start, steps, p
 |---|---|---|
 | M0 | Scaffold | Next.js + TS + Tailwind pixel theme, PWA manifest, `.env.example`, Supabase client (with demo fallback), lint passes, deployed or running locally |
 | M1 | Map + places | Leaflet map, live position, seeded Boston places with rarity pins, place detail sheet |
-| M2 | Check-in + photo + AI card | Geofence check, camera capture, `/api/stamps` → Kiro ACP card (or mock), card reveal animation, saved to the Dex |
+| M2 | Check-in + photo + stamp card | Geofence check, camera capture, required "no people" checkbox, `/api/stamps` → stamp card from place + photo (no AI), card reveal animation, saved to the Dex |
 | M3 | Health snapshot | Provider interface, demo provider, browser route tracking with estimated steps, snapshot attached to each stamp and shown on the card |
 | M4 | Points, badges, leaderboards | Points formula, badge engine, global leaderboard (week / all time × steps / points / stamps) |
 | M5 | Onboarding goals + recommendations | Goals flow, progress rings, "Today's Quests" with reasons |

@@ -13,7 +13,7 @@ committed before starting the next.
 |---|---|---|
 | M0 | Scaffold | Next.js + TS + Tailwind pixel theme, PWA manifest, `.env.example`, Supabase client with demo fallback, lint passes, runs locally |
 | M1 | Map + places | Leaflet map, live position, seeded Boston places with rarity pins, place detail sheet |
-| M2 | Check-in + photo + AI card | Geofence check, camera capture, `/api/stamps` → Kiro ACP card (or mock), card reveal, saved to Dex |
+| M2 | Check-in + photo + stamp card | Geofence check, camera capture, required "no people" checkbox, `/api/stamps` → stamp card from place + photo (no AI), card reveal, saved to Dex |
 | M3 | Health snapshot | Provider interface, demo provider, browser route tracking (est. steps), snapshot on each stamp |
 | M4 | Points, badges, leaderboards | Points formula, badge engine, global leaderboard (week/all-time × steps/points/stamps) |
 | M5 | Onboarding goals + recs | Goals flow, progress rings, "Today's Quests" with reasons |
@@ -37,8 +37,6 @@ Run, in order, and fix failures before committing:
 ## Things only the human can do — ask, do not attempt
 - Creating the Supabase project and the Strava / WHOOP / Fitbit developer apps,
   and pasting secrets into `.env.local`.
-- Installing and logging in `kiro-cli` on the host that runs the server (needed
-  for real card generation; demo mode uses the mock instead).
 - Deploying to Vercel or any public URL.
 - Any action that sends data to an external service beyond the APIs in PLAN.md.
 

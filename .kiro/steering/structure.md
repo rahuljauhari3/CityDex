@@ -6,7 +6,7 @@ inclusion: always
 
 Proposed Next.js App Router layout. Keep pure, testable logic in `lib/` so it
 can be unit-tested without a browser or network. Keep all secret-touching code
-(the kiro-cli subprocess, provider tokens, service role) server-side only.
+(provider tokens, service role) server-side only.
 
 ```
 app/                      # Next.js App Router
@@ -26,22 +26,25 @@ lib/
   points/                 # points formula (rarity base, bonuses, multipliers)
   badges/                 # rule-based badge engine
   recs/                   # goal-based recommendation scoring
+  insights/               # place-insight trend + weekly health summary (pure)
   geo/                    # haversine, geofence, stride estimation
-  ai/                     # Kiro ACP stamp-card client (kiro-cli) + mock card generator
   db/                     # Supabase client + demo/in-memory fallback, queries
 tests/                     # vitest unit tests for lib/* pure logic
 data/
   seed/                   # Boston seed places (OSM-derived), demo users/history
+  cdc-places-suffolk.json  # CDC PLACES county baseline (static, cited)
 public/                    # PWA manifest, icons, static pixel assets
 ```
 
 ## Conventions
 
-- Validate every external input (API body, AI output, provider response) with
-  `zod` at the boundary.
-- Pure logic (`lib/points`, `lib/badges`, `lib/recs`, `lib/geo`, Apple Health
-  XML parser) must be free of I/O so it is directly unit-testable.
-- Server-only modules (`lib/ai`, provider token handling, `lib/db` service-role
-  paths) must never be imported into client components.
+- Validate every external input (API body, provider response) with `zod` at the
+  boundary.
+- Pure logic (`lib/points`, `lib/badges`, `lib/recs`, `lib/insights`, `lib/geo`,
+  Apple Health XML parser) must be free of I/O so it is directly unit-testable.
+- Server-only modules (provider token handling, `lib/db` service-role paths)
+  must never be imported into client components.
 - Demo fallbacks live alongside the real implementation they shadow (e.g.
-  `lib/health/demo.ts`, `lib/ai/mock.ts`, `lib/db/memory.ts`).
+  `lib/health/demo.ts`, `lib/db/memory.ts`).
+- **No AI anywhere:** there is no `lib/ai`, no model client, and no `kiro-cli`
+  subprocess. The stamp card is assembled from place data + the uploaded photo.
