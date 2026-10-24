@@ -4,9 +4,44 @@
 [INFO] acp.remote_sessions.enabled {"endpoint":"https://app.kiro.dev"}
 [INFO] [KiroAgent] MCP subsystem initialized
 [INFO] memory.sync.organizationDecision {"decision":"unknown"}
-[ERROR] (node:78281) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+[ERROR] (node:78782) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
 [INFO] fs.workflow.recipes.readDir.ok {"system":"fs","tier":"user","durationMs":1}
-[INFO] fs.workflow.recipes.readDir.ok {"system":"fs","tier":"cloud","durationMs":5}
-[INFO] fs.workflow.recipeCatalog.refreshShared.ok {"system":"fs","trigger":"startup","durationMs":8}
-Error: agent "citydex-bootstrap" needs upgrading for this agent engine, using "default" — run /upgrade-agent to convert citydex-bootstrap.json
+[INFO] fs.workflow.recipes.readDir.ok {"system":"fs","tier":"cloud","durationMs":6}
+[INFO] fs.workflow.recipeCatalog.refreshShared.ok {"system":"fs","trigger":"startup","durationMs":10}
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+I'll start by reading the source documents to ground the spec in what's actually planned.
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+I have the steering files and PLAN.md already in context from the system prompt. Let me verify PLAN.md on disk matches and check the steering directory to confirm the authoritative content.
+[tool] List Directory
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Completed
+The PLAN.md on disk matches the steering content I have in context. I have everything I need. Now I'll create the three spec documents.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now the design document.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+Now the tasks document, grouped by milestone M0–M8 with requirement references.
+[tool] Write File
+[tool] status: Pending
+[tool] status: Completed
+The spec is complete. I created three documents under `.kiro/specs/citydex-core/`:
+
+**requirements.md** — 15 numbered requirements as EARS-style user stories with granular acceptance criteria (REQ-n.m). Covers all P0 features (scaffold/demo guarantee, map, check-in, AI card, Dex, demo health provider, points/leaderboard), P1 features (badges, goals, recommendations, friends/feed, Strava + Apple Health export), and the full privacy block (REQ-14: consent, EXIF strip, person-photo rejection, no location on leaderboards, token encryption, RLS, account deletion) as hard requirements. Each criterion uses WHEN/WHILE/IF-THEN/WHERE + THE SYSTEM SHALL.
+
+**design.md** — architecture diagram and layering rules, config/demo-mode resolution, the full data model with RLS, the demo-mode fallback storage design (a single `Store` interface with `supabaseStore` and `memoryStore` implementations so route handlers never branch on backend), the `HealthProvider`/`HealthSnapshot` adapter with merge rules, the AI card pipeline (pointing to the `claude-vision-card` skill rather than guessing SDK shapes), the numbered check-in pipeline sequence, and the points/badges/recommendation/geo algorithms expressed as pure functions. A privacy-enforcement map ties each REQ-14 criterion to a mechanism.
+
+**tasks.md** — 62 checkbox tasks grouped M0→M8, each referencing requirement IDs and each small enough for one agent turn, with explicit lint/typecheck/test gates and commit messages per milestone (no `Co-Authored-By`). Human-only items (creating accounts/keys) are flagged with the demo-fallback-and-continue instruction.
+
+I followed the workflow rule's milestone ordering, wired privacy requirements in as non-negotiable, and kept pure logic isolated for testability per the structure steering. No application code was written. One thing to flag: the steering references a `claude-vision-card` skill while AGENT_PROMPT.md calls it `claude-api` — I used the name from the available skills list (`claude-vision-card`) in the spec, since that's the one actually present.
