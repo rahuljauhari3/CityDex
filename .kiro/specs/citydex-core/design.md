@@ -27,11 +27,11 @@ Next.js server (route handlers / server actions)
   └─ /api/feed /api/friends /api/kudos
         │
         ├─ lib/ (pure, testable): geo, points, badges, recs, health parsers
-        ├─ lib/ai/ (server-only): Claude client + mock
+        ├─ lib/ai/ (server-only): Kiro ACP client (kiro-cli) + mock
         └─ lib/db/ (server-only): Supabase OR demo in-memory/SQLite fallback
         ▼
 Supabase (Postgres + RLS, Auth, Storage `stamps`)  ── OR ──  Demo store
-External: Anthropic API, Strava/WHOOP/Fitbit OAuth, OSM tiles
+External: kiro-cli (Kiro, ACP), Strava/WHOOP/Fitbit OAuth, OSM tiles
 ```
 
 Design rules (from `structure.md`):
@@ -60,12 +60,15 @@ tests/            data/seed/            public/ (manifest, icons, pixel assets)
 A single `lib/config.ts` reads env once and exposes typed flags:
 - `isDemoMode = DEMO_MODE === "true"`
 - `hasSupabase = NEXT_PUBLIC_SUPABASE_URL && NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `hasAnthropic = !!ANTHROPIC_API_KEY`
+- `aiProvider = AI_PROVIDER` (`kiro` | `mock`; default `kiro` if a `kiro-cli`
+  binary is found on `KIRO_CLI_PATH`, else `mock`)
+- `kiroCliPath`, `kiroCardAgent`, `kiroCardTimeoutMs` (ACP card generator config)
 - `hasStrava`, `hasWhoop`, `hasFitbit` similarly.
 
 Selection logic (REQ-1.6, 1.7, 4.6, 6.2):
 - DB: `hasSupabase ? supabaseStore : memoryStore`.
-- AI: `hasAnthropic ? claudeCard : mockCard`.
+- AI: `aiProvider === "kiro" && kiro-cli available ? kiroAcpCard : mockCard`
+  (ACP path falls back to the CLI path, then to the mock on any failure).
 - Health: always include `demo` provider; add real providers when keys + user
   connection exist.
 
@@ -196,24 +199,37 @@ polyline; `est_steps = distanceM / strideLengthM` (default 0.7 m), always labele
 
 ## 6. AI stamp-card pipeline (REQ-4)
 
-Authoritative pattern comes from the `claude-vision-card` skill; the agent
+Authoritative pattern comes from the `kiro-vision-card` skill; the agent
 implementing `lib/ai` must activate it. Shape summary:
 
 - `StampCardSchema` (zod): `accepted`, `rejectReason`, `name`, `category` enum,
   `rarity` enum, `lore ≤ 220 chars`, `tags` max 4, `colorHex`.
 - Client resizes to ≤ 1280 px long edge, JPEG ~0.8, strips EXIF (REQ-3.5, 14.8).
-- Server builds message content with the **base64 image block BEFORE the text
-  block** (REQ-4.3) and calls
-  `client.messages.parse({ model: "claude-opus-5-5",
-     output_config: { effort: "low", format: zodOutputFormat(StampCardSchema) }, ... })`.
-- `zodOutputFormat` imported from `@anthropic-ai/sdk/helpers/zod`.
-- **Refusal** (`stop_reason === "refusal"`) → generic "Mystery Spot" card; do not
-  store photo (REQ-4.4).
-- **Null guard** `parsed_output` before use (REQ-4.5).
-- **Rejection** (`accepted === false`) → do not store photo, ask retake (REQ-4.8).
-- **No key** → `lib/ai/mock.ts` deterministic card (REQ-4.6).
-- System prompt tone: whimsical village naturalist; short, punny, PG; never
-  identify or describe real people; lore is clearly playful, not factual.
+- Server spawns `kiro-cli acp --agent $KIRO_CARD_AGENT` and drives it over the
+  Agent Client Protocol (JSON-RPC 2.0 over stdio): `initialize` → `session/new`
+  → `session/prompt` with the **base64 image content block BEFORE the text
+  block** (`{ type: "image", mimeType, data }`, `data` has no `data:` prefix)
+  (REQ-4.3) → collect `session/update` `agent_message_chunk` text.
+- **CLI fallback** (REQ-4.2): if ACP image input is unavailable, write the photo
+  to an OS temp file and run `kiro-cli chat --no-interactive --agent
+  $KIRO_CARD_AGENT`, pointing the agent at the temp file; delete the temp file
+  afterwards.
+- **Output parsing** (REQ-4.5): extract the first balanced JSON object from the
+  reply and `StampCardSchema.safeParse(...)`; a missing/unparseable/invalid
+  object is treated as a refusal.
+- **Refusal / reject** → generic "Mystery Spot" card; do not store the photo
+  (REQ-4.4). Applies to a `refusal`/`cancelled` stop reason, no parseable JSON,
+  a schema failure, or `accepted === false` (REQ-4.8).
+- **Timeout + kill:** enforce `KIRO_CARD_TIMEOUT_MS` (default 45000); SIGKILL the
+  kiro-cli child on timeout and fall back to the mock; no orphan processes.
+- **Single in-process queue:** only one kiro-cli card job runs at a time.
+- **No kiro-cli / `AI_PROVIDER=mock`** → `lib/ai/mock.ts` deterministic card
+  (REQ-4.6).
+- kiro-cli is spawned **server-side only**, never from the client (REQ-4.9). The
+  app does not use the Anthropic SDK or API.
+- System prompt tone (agent `citydex-cardsmith`): whimsical village naturalist;
+  short, punny, PG; never identify or describe real people; lore is clearly
+  playful, not factual.
 
 ---
 
@@ -226,7 +242,8 @@ implementing `lib/ai` must activate it. Shape summary:
    `source=user` place at rounded coords (REQ-3.1, 3.3, 14.4).
 3. **Health snapshot**: merge snapshots from the user's connected providers for
    `[route.started_at … now]`; demo provider if none (REQ-6, 7.3).
-4. **AI card**: run the Claude pipeline (or mock). Handle refusal/rejection first;
+4. **AI card**: run the Kiro ACP pipeline (or CLI fallback / mock). Handle
+   refusal/rejection first;
    if not accepted, return a retake response and store nothing (REQ-4.4, 4.8).
 5. **EXIF strip + store photo** (only if accepted) to Storage / memory data URL
    (REQ-14.8).

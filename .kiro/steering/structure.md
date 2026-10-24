@@ -6,7 +6,7 @@ inclusion: always
 
 Proposed Next.js App Router layout. Keep pure, testable logic in `lib/` so it
 can be unit-tested without a browser or network. Keep all secret-touching code
-(Anthropic, provider tokens, service role) server-side only.
+(the kiro-cli subprocess, provider tokens, service role) server-side only.
 
 ```
 app/                      # Next.js App Router
@@ -27,7 +27,7 @@ lib/
   badges/                 # rule-based badge engine
   recs/                   # goal-based recommendation scoring
   geo/                    # haversine, geofence, stride estimation
-  ai/                     # Claude stamp-card client + mock card generator
+  ai/                     # Kiro ACP stamp-card client (kiro-cli) + mock card generator
   db/                     # Supabase client + demo/in-memory fallback, queries
 tests/                     # vitest unit tests for lib/* pure logic
 data/

@@ -18,7 +18,8 @@ and powers points, badges, leaderboards, and goal-based place recommendations.
   colors, activity orange)
 - **Supabase** (Postgres, Auth, Storage) with an in-memory **demo fallback**
 - **react-leaflet** + OpenStreetMap tiles (M1+)
-- **Anthropic** `@anthropic-ai/sdk` (`claude-opus-5-5`), server-side only (M2+)
+- **Kiro** over the Agent Client Protocol (ACP) via `kiro-cli`, server-side only
+  (M2+); no Anthropic SDK or API. A deterministic mock covers demo mode.
 - **zod** for validation, **vitest** for pure-logic unit tests
 
 ## Demo mode (no keys required)
@@ -27,7 +28,7 @@ CityDex is designed so the full flow runs **with zero API keys**. With
 `DEMO_MODE=true` and nothing else configured:
 
 - data lives in an in-memory store (no Supabase needed),
-- the AI stamp card uses a deterministic mock generator (no Anthropic key),
+- the AI stamp card uses a deterministic mock generator (no kiro-cli needed),
 - a seeded **DEMO** health provider supplies synthetic snapshots.
 
 Real keys switch on the real integrations; their absence never breaks the demo.
@@ -53,13 +54,14 @@ test at **375×812** (e.g. iPhone X) in your browser's device toolbar.
 ## Environment variables
 
 See [`.env.example`](./.env.example) for the full list. All keys are optional in
-demo mode. Secret-touching values (`ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-provider client secrets) are read **server-side only** and never shipped to the
-client.
+demo mode. Secret-touching values (`SUPABASE_SERVICE_ROLE_KEY`, provider client
+secrets) are read **server-side only** and never shipped to the client. The AI
+runs through Kiro via `kiro-cli` spawned **server-side only**; the app uses no
+Anthropic SDK or API.
 
-Only a human can create the Supabase project, the Strava/WHOOP/Fitbit developer
-apps, and the Anthropic key, then paste them into `.env.local`. Never commit
-`.env.local`.
+Only a human can create the Supabase project and the Strava/WHOOP/Fitbit
+developer apps, and install + log in `kiro-cli` on the server host, then paste
+any secrets into `.env.local`. Never commit `.env.local`.
 
 ## Scripts
 

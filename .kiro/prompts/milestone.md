@@ -5,8 +5,9 @@ truth.
 1. Read PLAN.md §12 for milestone {{M}}'s scope and its "done when" criteria,
    plus any sections it depends on.
 2. Draft a short task list for {{M}} and work through it.
-3. Keep demo mode working (DEMO_MODE=true, no keys) throughout. For any Claude
-   API code, use the claude-vision-card skill.
+3. Keep demo mode working (DEMO_MODE=true, no keys) throughout. For the
+   stamp-card AI runtime, use the kiro-vision-card skill (Kiro over ACP; the app
+   does not use the Anthropic SDK or API).
 4. Delegate unit tests for pure logic to `citydex-tester` via the subagent tool.
 5. Delegate a review against privacy.md / tech.md / PLAN.md to
    `citydex-reviewer` via the subagent tool.

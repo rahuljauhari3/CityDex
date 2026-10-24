@@ -21,9 +21,14 @@ violation as a build failure.
 - **Never show location or routes on leaderboards. Ever.**
 
 ## Photos
-- Strip EXIF (including location) before storing.
-- Reject photos where a person is the main subject (AI `accepted === false`):
-  do not store the photo; ask the user to retake.
+- Resize client-side (≤ 1280 px long edge, JPEG ~0.8) and strip EXIF (including
+  location) before the photo leaves the browser.
+- The photo is sent to the Kiro card agent (`citydex-cardsmith`) over ACP
+  server-side only for card generation; it is EXIF-stripped before storage.
+- Reject photos where a person is the main subject (agent `accepted === false`,
+  or a refusal / unparseable card): do **not** store the photo; ask the user to
+  retake. For the CLI fallback, the temp image file is deleted immediately after
+  the card is generated.
 
 ## Health data honesty
 - "Not medical advice" footer on every health screen. Wellness language only;
@@ -39,5 +44,6 @@ violation as a build failure.
 - Account deletion removes photos, stamps, snapshots, and tokens.
 
 ## Secrets
-- Anthropic key and all provider tokens stay server-side only; never shipped to
-  the client.
+- All provider tokens stay server-side only; never shipped to the client.
+- `kiro-cli` is spawned server-side only (never from the client), and the app
+  does not use the Anthropic SDK or API.

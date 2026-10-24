@@ -6,8 +6,9 @@ committed (`M<n>: <summary>`, no `Co-Authored-By` trailer) after
 `npm run lint` → `npx tsc --noEmit` → `npm test` pass. Each task references the
 requirement IDs it satisfies and is scoped for a single agent turn.
 
-Only the human can create Supabase/Strava/WHOOP/Fitbit apps and the Anthropic
-key; build those features behind the demo fallback and continue.
+Only the human can create Supabase/Strava/WHOOP/Fitbit apps and install + log in
+`kiro-cli` on the server host; build those features behind the demo fallback
+(mock card generator) and continue.
 
 ---
 
@@ -23,6 +24,8 @@ key; build those features behind the demo fallback and continue.
   `.gitignore` excludes `.env.local`. _(REQ-1.4)_
 - [x] 5. Add `lib/config.ts` resolving `isDemoMode`, `hasSupabase`,
   `hasAnthropic`, `hasStrava/Whoop/Fitbit`. _(REQ-1.3, REQ-1.7)_
+  _(Superseded by M2b 25a: `hasAnthropic` → `aiProvider` + `kiroCliPath` /
+  `kiroCardAgent` / `kiroCardTimeoutMs`.)_
 - [x] 6. Add the `Store` interface and `lib/db/memory.ts` + `lib/db/supabase.ts`
   skeletons with `getStore()` selecting by `hasSupabase`. _(REQ-1.6)_
 - [x] 7. Add bottom tab bar (Map · Quests · Dex · Feed · Profile) and empty route
@@ -56,11 +59,13 @@ key; build those features behind the demo fallback and continue.
 - [x] 18. Add geofence collect gating (~75 m) and GPS-accuracy guard (>50 m
   warns/blocks). _(REQ-3.1, REQ-3.2)_
 - [x] 19. Define `StampCardSchema` (zod) per `design.md` §6. _(REQ-4.7)_
-- [x] 20. Activate the `claude-vision-card` skill and implement `lib/ai/claude.ts`
-  (model, `messages.parse`, `zodOutputFormat`, image-before-text, refusal + null
-  guard). _(REQ-4.2, REQ-4.3, REQ-4.4, REQ-4.5, REQ-4.9)_
-- [x] 21. Implement `lib/ai/mock.ts` deterministic card generator used when no
-  Anthropic key. _(REQ-4.6)_
+- [x] 20. Activate the `kiro-vision-card` skill and implement `lib/ai/kiro.ts`
+  (spawn `kiro-cli acp --agent $KIRO_CARD_AGENT`; `initialize` → `session/new` →
+  `session/prompt` with image-before-text; collect `agent_message_chunk`;
+  extract first JSON + `StampCardSchema.safeParse`; CLI fallback; refusal →
+  Mystery Spot; timeout + kill; single in-process queue). _(REQ-4.2, REQ-4.3, REQ-4.4, REQ-4.5, REQ-4.9)_
+- [x] 21. Implement `lib/ai/mock.ts` deterministic card generator used when
+  `AI_PROVIDER=mock` or kiro-cli is unavailable. _(REQ-4.6)_
 - [x] 22. Implement `POST /api/stamps` check-in pipeline per `design.md` §7
   (validate → resolve/create place → AI card → reject/retake handling → store
   photo → persist stamp/route/place). _(REQ-3.3, REQ-4.1, REQ-4.8, REQ-14.4)_
@@ -71,6 +76,40 @@ key; build those features behind the demo fallback and continue.
   undiscovered nearby places. _(REQ-5.2, REQ-5.3)_
 - [x] 25. Verify full collect flow at 375×812 in demo mode; commit `M2: check-in,
   photo capture, AI stamp card, and Dex`.
+
+## M2b — Replace Anthropic SDK with Kiro ACP card generator
+
+Direction change: the app's AI runtime is **Kiro only** (no `@anthropic-ai/sdk`,
+no Anthropic API). The stamp-card generator runs over the Agent Client Protocol.
+Config/docs are updated in a separate config run; these tasks cover the app code.
+
+- [ ] 25a. Remove `@anthropic-ai/sdk` from `package.json`/lockfile and delete
+  `lib/ai/claude.ts`; remove `ANTHROPIC_API_KEY`/`hasAnthropic` from
+  `lib/config.ts` and `.env.example`, adding `AI_PROVIDER`, `KIRO_CLI_PATH`,
+  `KIRO_CARD_AGENT`, `KIRO_CARD_TIMEOUT_MS`. _(REQ-4.9, REQ-1.4, REQ-1.7)_
+- [ ] 25b. Implement `lib/ai/kiro-acp.ts` driving `kiro-cli acp --agent
+  $KIRO_CARD_AGENT` over JSON-RPC 2.0 stdio (`initialize` → `session/new` →
+  `session/prompt` with image-before-text → collect `agent_message_chunk`), per
+  the `kiro-vision-card` skill. _(REQ-4.2, REQ-4.3)_
+- [ ] 25c. Implement `lib/ai/kiro-cli.ts` CLI fallback: write the photo to an OS
+  temp file, run `kiro-cli chat --no-interactive --agent $KIRO_CARD_AGENT`, and
+  delete the temp file in a `finally`. _(REQ-4.2, REQ-4.9)_
+- [ ] 25d. Implement `lib/ai/parse.ts` first-balanced-JSON-object extractor and
+  `StampCardSchema.safeParse`; treat missing/unparseable/invalid as a refusal
+  → "Mystery Spot" and do not store the photo. _(REQ-4.4, REQ-4.5, REQ-4.8)_
+- [ ] 25e. Add the per-card timeout + SIGKILL (`KIRO_CARD_TIMEOUT_MS`) and a
+  single in-process queue so only one kiro-cli job runs at a time. _(REQ-4.9)_
+- [ ] 25f. Wire `lib/ai/index.ts` selection: `AI_PROVIDER=mock` or no kiro-cli →
+  mock; otherwise ACP, falling back to CLI, then to the mock on any failure.
+  _(REQ-4.6, REQ-1.3, REQ-1.7)_
+- [ ] 25g. Update `app/api/stamps/route.ts` to call the Kiro card generator; keep
+  the reject/retake + no-photo-store behavior. _(REQ-4.1, REQ-4.8)_
+- [ ] 25h. Grep the repo for `anthropic`, `claude`, `opus`, `zodOutputFormat`,
+  `parsed_output` and confirm none remain outside historical logs. Update unit
+  tests to cover the JSON extractor and the mock fallback. _(REQ-4.7)_
+- [ ] 25i. Verify demo mode (AI_PROVIDER=mock) end to end at 375×812; run lint,
+  `tsc --noEmit`, tests; commit `M2b: replace Anthropic SDK with Kiro ACP card
+  generator`.
 
 ## M3 — Health snapshot
 

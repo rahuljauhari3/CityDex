@@ -121,3 +121,21 @@ All staged files are M2 work — no `.env.local` or secret files. One log file c
 [tool] Re-stage updated log file
 [tool] status: InProgress
 [tool] status: InProgress
+[tool] status: Completed
+[tool] Commit M2 milestone
+[tool] status: InProgress
+[tool] status: InProgress
+[tool] status: Completed
+M2 is finished and committed. Here's what I did:
+
+**Verification gate (each as its own command, per the shell rules):**
+1. `npx tsc --noEmit` — failed with type errors in `LeafletMap.tsx`. The `onCollected` handler treated its argument as a `Place`, but `PlaceSheet` passes `{ stamp, place }`. Fixed by destructuring `{ place: updatedPlace }`.
+2. `npm run lint` — failed on `StampCardReveal.tsx`: synchronous `setState` inside an effect. Refactored `reduced` to a lazy `useState` initializer (SSR-safe via the `prefersReducedMotion` guard), removing the cascading render.
+3. `npm test` — 37 tests passed across 4 files.
+4. `npm run build` — failed because `cacheComponents` is incompatible with the `export const runtime = "nodejs"` segment config the API routes need for the server-only Anthropic SDK. Removed `cacheComponents` (and `partialPrefetching`, which depends on it) from `next.config.ts`, keeping the Node runtime. Build then succeeded.
+
+I re-ran `tsc` after the lint refactor to confirm nothing regressed.
+
+**Commit:** Marked task 25 `[x]` in `tasks.md`, staged with `git add -A` (verified no `.env.local` or secrets in the set — all M2 code, specs, and logs), and committed as `M2: check-in, photo capture, AI stamp card, and Dex` with no Co-Authored-By trailer. Nothing was pushed.
+
+One note worth flagging: dropping Cache Components was a config-level tradeoff rather than a code change to the routes. The routes genuinely need the Node runtime, so this was the right direction, but if Cache Components was intentionally wanted for prefetching performance later, the alternative would be reworking those handlers to avoid the `runtime` segment config. For M2's demo-mode goal it isn't needed.

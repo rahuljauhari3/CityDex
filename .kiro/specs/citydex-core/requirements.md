@@ -86,24 +86,30 @@ name, rarity, and funny lore, so collecting feels rewarding.
 ### Acceptance criteria
 4.1 WHEN a photo is submitted to `POST /api/stamps` (multipart: photo, lat, lng,
 accuracy, routeId), THE SYSTEM SHALL process it server-side only.
-4.2 THE SYSTEM SHALL call Claude using model `claude-opus-5-5` via
-`client.messages.parse(...)` with
-`output_config: { effort: "low", format: zodOutputFormat(StampCardSchema) }`,
-`zodOutputFormat` imported from `@anthropic-ai/sdk/helpers/zod`.
-4.3 THE SYSTEM SHALL place the base64 `image` content block BEFORE the text block
-in the message content.
-4.4 IF `stop_reason === "refusal"`, THEN THE SYSTEM SHALL fall back to a generic
-"Mystery Spot" card and SHALL NOT store the photo.
-4.5 THE SYSTEM SHALL guard `parsed_output` for `null` before using it.
-4.6 WHERE `ANTHROPIC_API_KEY` is absent, THE SYSTEM SHALL use a deterministic mock
-card generator per the `claude-vision-card` skill.
+4.2 THE SYSTEM SHALL generate the card through Kiro over the Agent Client
+Protocol by spawning `kiro-cli acp --agent $KIRO_CARD_AGENT` and driving it
+`initialize` → `session/new` → `session/prompt` → collecting `session/update`
+`agent_message_chunk` text, with a `kiro-cli chat --no-interactive --agent
+$KIRO_CARD_AGENT` CLI fallback (photo written to an OS temp file) WHERE ACP
+image input is unavailable. THE SYSTEM SHALL NOT use the Anthropic SDK or API.
+4.3 THE SYSTEM SHALL place the base64 `image` content block (`{ type: "image",
+mimeType, data }`, `data` without a `data:` prefix) BEFORE the text block in the
+`session/prompt` content.
+4.4 IF the agent refuses (a `refusal`/`cancelled` stop reason), returns no
+parseable JSON, or fails schema validation, THEN THE SYSTEM SHALL fall back to a
+generic "Mystery Spot" card and SHALL NOT store the photo.
+4.5 THE SYSTEM SHALL extract the first balanced JSON object from the agent reply
+and validate it with `StampCardSchema.safeParse(...)` before use.
+4.6 WHERE `AI_PROVIDER=mock` or `kiro-cli` is unavailable, THE SYSTEM SHALL use a
+deterministic mock card generator per the `kiro-vision-card` skill.
 4.7 THE SYSTEM SHALL validate the AI output against `StampCardSchema` (accepted,
 rejectReason, name, category, rarity, lore ≤ 220 chars, tags max 4, colorHex).
 4.8 IF `accepted === false` (person as main subject, screen, private interior, or
 unrecognizable), THEN THE SYSTEM SHALL NOT store the photo and SHALL prompt the
 user to retake.
-4.9 THE SYSTEM SHALL keep the Anthropic API key server-side only and never ship it
-to the client.
+4.9 THE SYSTEM SHALL spawn `kiro-cli` server-side only (never from the client),
+enforce `KIRO_CARD_TIMEOUT_MS` (killing the process on timeout), run a single
+in-process card-job queue, and delete any CLI-fallback temp image file after use.
 
 ---
 

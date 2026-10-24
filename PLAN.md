@@ -47,7 +47,7 @@ Wellness insights only, never medical advice. The hackathon page itself says "Cl
 5. **Check-in pipeline (server):**
    1. Verify location (GPS accuracy ≤ 50 m, within the geofence, or a new place at the current coordinates).
    2. Pull a **health snapshot** from connected providers for the window `[route start … now]`: steps, average and max HR, HR zones, calories, SpO₂ if available.
-   3. Send the photo to Claude (vision) → stamp card JSON (name, category, rarity, lore, tags).
+   3. Send the photo to Kiro (ACP vision) → stamp card JSON (name, category, rarity, lore, tags).
    4. Compute points: rarity base + health bonus + first-discoverer bonus.
    5. Save the stamp; update tags and badges, the leaderboards and the feed.
 6. **Card reveal:** a pixel-art card flips over with a rarity glow, lore, stats ("1.8 km · 2,340 steps · avg 128 bpm · 142 kcal") and the points earned.
@@ -61,7 +61,7 @@ Wellness insights only, never medical advice. The hackathon page itself says "Cl
 |---|---|---|
 | **P0** | Map with places + live position | react-leaflet + OpenStreetMap tiles (attribution required) |
 | **P0** | Check-in with geofence + photo capture | `<input type="file" accept="image/*" capture="environment">` |
-| **P0** | AI stamp card from the photo | Claude vision + structured output (section 6) |
+| **P0** | AI stamp card from the photo | Kiro vision (ACP) + structured output (section 6) |
 | **P0** | Collection book ("Dex") | Inventory-grid UI, locked silhouettes for undiscovered nearby places |
 | **P0** | Demo health provider | Seeded realistic data so the demo works with no watch (labeled DEMO) |
 | **P0** | Points + global leaderboard | Weekly and all-time; steps, points, stamps |
@@ -129,7 +129,7 @@ At check-in, merge snapshots from all connected providers. Prefer real device da
 - **Backend:** Next.js route handlers / server actions.
 - **Database / Auth / Storage:** Supabase (Postgres, Auth, Storage bucket `stamps` for photos, Row Level Security on every table).
 - **Map:** `react-leaflet` + OpenStreetMap tiles (keep the © OpenStreetMap attribution visible). Pixel-styled custom markers.
-- **AI:** Anthropic TypeScript SDK `@anthropic-ai/sdk`, model `claude-opus-5-5` (section 6). Server-side only; the API key never reaches the client.
+- **AI:** **Kiro only** — the app does **not** use the Anthropic SDK or API. The Next.js server reaches Kiro over the **Agent Client Protocol (ACP, JSON-RPC 2.0 over stdio)** by spawning `kiro-cli acp --agent citydex-cardsmith` (section 6). A `kiro-cli chat --no-interactive` CLI fallback and a deterministic mock cover the cases where ACP image input or kiro-cli itself is unavailable. Server-side only; kiro-cli is never spawned from the client. Use the `kiro-vision-card` skill for the exact message sequence. Do not guess protocol shapes.
 - **Validation:** `zod` everywhere (API inputs, AI output, provider responses).
 - **Geo math:** haversine in TypeScript (PostGIS is optional; not needed for the demo scale).
 
@@ -138,7 +138,10 @@ At check-in, merge snapshots from all connected providers. Prefer real device da
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-ANTHROPIC_API_KEY=
+AI_PROVIDER=kiro            # kiro | mock (default: kiro if kiro-cli is found, else mock)
+KIRO_CLI_PATH=kiro-cli      # path to the kiro-cli binary (default "kiro-cli")
+KIRO_CARD_AGENT=citydex-cardsmith   # agent spawned for card generation
+KIRO_CARD_TIMEOUT_MS=45000  # per-card timeout before the process is killed
 STRAVA_CLIENT_ID=
 STRAVA_CLIENT_SECRET=
 WHOOP_CLIENT_ID=
@@ -146,17 +149,17 @@ WHOOP_CLIENT_SECRET=
 FITBIT_CLIENT_ID=
 FITBIT_CLIENT_SECRET=
 APP_URL=http://localhost:3000
-DEMO_MODE=true        # seeds demo users + demo health provider, mock AI card if no ANTHROPIC_API_KEY
+DEMO_MODE=true        # seeds demo users + demo health provider, mock AI card if AI_PROVIDER=mock or kiro-cli unavailable
 ```
-**The app must run end to end with only `DEMO_MODE=true`.** With no keys, use a local mock for the AI card and in-memory or SQLite fallback data if Supabase is not configured. That's what keeps the hackathon demo safe.
+**The app must run end to end with only `DEMO_MODE=true`.** With no keys and no `kiro-cli`, use a local mock for the AI card and in-memory or SQLite fallback data if Supabase is not configured. That's what keeps the hackathon demo safe.
 
 ---
 
-## 6. AI stamp card generation (Claude)
+## 6. AI stamp card generation (Kiro)
 
 - **Endpoint:** `POST /api/stamps` (multipart: photo, lat, lng, accuracy, routeId).
 - Resize the photo client-side to ≤ 1280 px long edge, JPEG ~0.8, before upload. Strip EXIF location before storing.
-- **Model:** `claude-opus-5-5`, `output_config: { effort: "low", format: zodOutputFormat(StampCardSchema) }` via `client.messages.parse(...)`. Image sent as a base64 `image` content block before the text block. Handle `stop_reason === "refusal"` (fall back to a generic "Mystery Spot" card), and guard `parsed_output` for null. Use the `claude-api` skill for exact current SDK usage. Do not guess API shapes.
+- **Runtime:** **Kiro over the Agent Client Protocol (ACP, JSON-RPC 2.0 over stdio).** The Next.js server spawns `kiro-cli acp --agent citydex-cardsmith` and drives it: `initialize` → `session/new` → `session/prompt` with the **base64 image content block before the text block** (`{ type: "image", mimeType, data }`, `data` has no `data:` prefix) → collect `session/update` `agent_message_chunk` text → extract the first JSON object and `StampCardSchema.safeParse(...)` it. **CLI fallback:** if ACP image input is unavailable, write the photo to an OS temp file and run `kiro-cli chat --no-interactive --agent citydex-cardsmith`, pointing the agent at that file. **Mock fallback:** if `AI_PROVIDER=mock` or kiro-cli is unavailable/fails, use a deterministic mock card. Refusal, no parseable JSON, a schema failure, or `accepted === false` → generic "Mystery Spot" card (do not store the photo). Enforce `KIRO_CARD_TIMEOUT_MS` (kill the process on timeout) and a single in-process queue (one card job at a time). The app does **not** use the Anthropic SDK or API. Use the `kiro-vision-card` skill for the exact message sequence. Do not guess protocol shapes.
 - **Schema:**
 ```ts
 const StampCardSchema = z.object({
@@ -288,7 +291,7 @@ leaderboard_weekly (materialized view or SQL view: user_id, week_start, steps, p
 |---|---|---|
 | M0 | Scaffold | Next.js + TS + Tailwind pixel theme, PWA manifest, `.env.example`, Supabase client (with demo fallback), lint passes, deployed or running locally |
 | M1 | Map + places | Leaflet map, live position, seeded Boston places with rarity pins, place detail sheet |
-| M2 | Check-in + photo + AI card | Geofence check, camera capture, `/api/stamps` → Claude card (or mock), card reveal animation, saved to the Dex |
+| M2 | Check-in + photo + AI card | Geofence check, camera capture, `/api/stamps` → Kiro ACP card (or mock), card reveal animation, saved to the Dex |
 | M3 | Health snapshot | Provider interface, demo provider, browser route tracking with estimated steps, snapshot attached to each stamp and shown on the card |
 | M4 | Points, badges, leaderboards | Points formula, badge engine, global leaderboard (week / all time × steps / points / stamps) |
 | M5 | Onboarding goals + recommendations | Goals flow, progress rings, "Today's Quests" with reasons |
