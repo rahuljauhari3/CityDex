@@ -63,3 +63,74 @@
   `rm -rf .kiro/skills/claude-vision-card`. App code under `lib/ai`, `app/api`,
   `package.json`, and `.env.example` still references Anthropic and is handled in
   the separate M2b code run (tasks 25a–25i).
+
+---
+
+## 2026-10-24 — Final re-scope: healthcare focus, no AI, batched delivery
+
+**Direction change from the human (final).** Two decisions reshape the project:
+
+1. **Healthcare (track H1) is the point; the collecting game is the motivation
+   layer.** Updated `.kiro/steering/product.md` to lead with the pitch "How does
+   this place affect your body?" and an explicit, prioritized list of the health
+   features: health snapshot per check-in (steps, HR avg/max, HR zones, active
+   kcal, SpO₂, with a source label) → weekly health summary → goals + progress
+   rings → goal-based "Today's Quests" → place insights over time (HR at the same
+   pace trending across visits) → CDC PLACES Suffolk County baseline card →
+   Strava + Apple Health export, all under the privacy/consent/not-medical-advice
+   rules. Pulled the two P2 health features (place insights, CDC baseline) into
+   scope as REQ-16/17/18.
+
+2. **No AI anywhere.** Dropped AI stamp-card generation entirely — no Anthropic
+   SDK or API, no Kiro ACP card generation, no `kiro-cli` subprocess, no
+   `cardsmith`, no `lib/ai`. At check-in the user adds a photo that is shown on
+   the stamp **exactly as uploaded** (still resized ≤ 1280 px and EXIF/location
+   stripped client-side). The stamp's name, category and rarity come from the
+   **place**: a seeded place supplies its stored values; a new user-created place
+   uses the name + category the user types, with rarity `common`. The old AI
+   "person is the main subject" check is replaced by a required checkbox: **"No
+   people are the main subject of this photo"** — the server returns a 4xx and
+   stores nothing if it is unset.
+
+**Why.** (a) It sharpens the hackathon submission on the healthcare track the
+app is actually entered in. (b) It makes the demo simpler and far more reliable:
+no model latency, no `kiro-cli` install/login on the host, no ACP protocol
+surface to get wrong, and no fallbacks to babysit — the card is deterministic and
+offline, so demo mode works everywhere with zero keys. (c) It removes an entire
+dependency and its failure modes, which is the right trade for a one-day build.
+
+**Config/doc sweep (this run — docs/config only, no app code).**
+- Removed every mention of AI card generation, the Anthropic SDK, Kiro ACP card
+  generation, `cardsmith`, `AI_PROVIDER`/`KIRO_CARD_*` env vars, `lore`, and the
+  mock card from: `.kiro/steering/{product,tech,structure,workflow,ui,privacy}.md`,
+  `.kiro/prompts/milestone.md`, `PLAN.md` (§2 flow, §3 table, §5 stack + env, §6
+  rewritten as "Stamp card generation (no AI)", §9 UI, §11 privacy, §12 M2 row),
+  `AGENT_PROMPT.md`, `README.md`, `.env.example`, and the spec
+  (`requirements.md` REQ-4/5/8.3/14.8, `design.md` §1/§2/§4/§6/§7/§8/§12/§14,
+  `tasks.md`).
+- Spec additions: REQ-16 (place insights over time), REQ-17 (CDC PLACES Suffolk
+  County baseline card), REQ-18 (weekly health summary); `design.md` §15/§16/§17
+  for the insight algorithm (`computePlaceInsights`: ±10% pace bucketing + bpm/
+  week linear trend, ≥2 points, sample size), the CDC baseline file format
+  (`data/cdc-places-suffolk.json` with sourceUrl/releaseYear/dataYear), and the
+  weekly summary aggregation (`computeWeeklySummary` with per-field source).
+- `tasks.md` restructured into batches: **B0** remove all AI + switch to
+  photo-as-uploaded + place card + fix the `qa-findings-1.md` findings; **B1**
+  M3 health snapshot + M4 points/badges/leaderboards; **B2** M5 goals/quests +
+  REQ-16/17/18; **B3a** M6 friends/feed and **B3b** M7 Strava/Apple export as
+  parallel worktrees (each lists the files it owns and the shared
+  `types.ts`/`store.ts`/`memory.ts` additive-only edits); **B4** M8 demo seed +
+  README. Each batch ends with lint → tsc → test → build → commit.
+- Agents: rewrote `citydex-builder` (no-AI prompt, dropped the `skill://`
+  resource and `skill` capability) and `citydex-reviewer` (checks for the
+  *absence* of AI and for the required "no people" checkbox). Tombstoned
+  `.kiro/agents/citydex-cardsmith.json` and both skill folders
+  (`.kiro/skills/{kiro,claude}-vision-card`) — this configuring agent has no
+  delete tool, so each file now carries a removal note and must be dropped with
+  `git rm .kiro/agents/citydex-cardsmith.json` and
+  `rm -rf .kiro/skills/kiro-vision-card .kiro/skills/claude-vision-card`.
+
+**Still references AI (handled by the B0 code run, not this config run):** app
+code under `lib/ai/`, `app/api/stamps/route.ts`, `lib/config.ts`, `package.json`
+(`@anthropic-ai/sdk`), `scripts/kiro-card-smoke.mjs`, and the `tests/ai-*.ts`
+tests. B0 removes all of it.

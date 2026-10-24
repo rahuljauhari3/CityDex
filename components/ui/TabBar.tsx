@@ -24,7 +24,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-50 border-t-4 border-wood-dark bg-wood-light"
+      className="fixed inset-x-0 bottom-0 z-50 border-t-4 border-wood-dark bg-wood-light pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto flex max-w-screen-sm items-stretch justify-between">
         {TABS.map((tab) => {

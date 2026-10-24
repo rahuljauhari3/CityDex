@@ -99,17 +99,6 @@ body {
   animation: card-reveal 0.42s ease-out both;
 }
 
-/* Subtle dither/pixelation feel over stamp photos (ui.md). Decorative only. */
-.stamp-dither {
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(91, 58, 41, 0.08) 0,
-    rgba(91, 58, 41, 0.08) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-}
-
 /* Respect reduced-motion: disable glow/flip animations (ui.md). */
 @media (prefers-reduced-motion: reduce) {
   *,

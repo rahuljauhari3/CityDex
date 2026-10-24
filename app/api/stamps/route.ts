@@ -1,32 +1,35 @@
 /**
- * POST /api/stamps — the check-in pipeline (design.md §7; REQ-3.1–3.3, 4.1,
- * 4.4, 4.8, 14.4, 14.8).
+ * POST /api/stamps — the check-in pipeline (design.md §6, §7; REQ-3.1–3.3,
+ * 4.1, 4.3–4.8, 8.3, 14.4, 14.8).
  *
- * Multipart body: photo (File), lat, lng, accuracy, optional routeId, optional
- * placeId, and a demo `teleport` flag. Server-only: reaches the active `Store`
- * and the AI card generator (Claude or deterministic mock). The Anthropic key
- * and any backend secrets never leave the server.
+ * Multipart body: photo (File), lat, lng, accuracy, optional routeId, a
+ * required `noPeople` checkbox flag, and a demo `teleport` flag. The place is
+ * identified by **either** `placeId` (a seeded place) **or** `name` + `category`
+ * (a new user-created place). Server-only: reaches the active `Store`. There is
+ * **no AI** — the card is assembled from place data + the uploaded photo.
  *
  * Pipeline:
- *   1. validate input (zod); reject GPS accuracy > 50 m unless demo teleport
- *   2. resolve place: explicit placeId → that place; else nearest seeded place
- *      within ~75 m; else create a user place at rounded coords
- *   3. geofence gate (~75 m) unless demo teleport
- *   4. AI card (Claude or mock); if not accepted → retake, store nothing
- *   5. store photo (demo: data URL in memory), only when accepted
- *   6. persist route (if coords) + stamp; increment place collect_count
- *   7. respond with card + stats + points for the reveal animation
+ *   1. validate input (zod); reject GPS accuracy > 50 m unless demo teleport;
+ *      reject with a 4xx (store nothing) if `noPeople !== true`
+ *   2. resolve place: `placeId` → that place (must be in range unless teleport);
+ *      else create a user place from the typed `name` + `category`
+ *   3. build the card from the place (seeded → stored name/category/rarity;
+ *      user → typed name/category, rarity `common`), with the final rarity
+ *      adjusted by collector count
+ *   4. store the photo exactly as uploaded (demo: data URL in memory)
+ *   5. persist route (if coords) + stamp; increment place collect_count
+ *   6. respond with card + stats + points for the reveal animation
  *
- * Health snapshots, the full points formula, final-rarity adjustment, and badge
- * evaluation arrive in M3/M4; M2 uses the AI-suggested rarity and the rarity
- * base for points.
+ * Health snapshots, the full points formula, and badge evaluation arrive in B1;
+ * B0 uses the rarity base for points.
  */
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getStore } from "@/lib/db";
-import { generateCard } from "@/lib/ai";
 import { rarityBase } from "@/lib/points/rarity";
+import { buildStampCard } from "@/lib/stamp/build";
+import { STAMP_CATEGORIES } from "@/lib/stamp/card";
 import {
   haversineMeters,
   isWithinGeofence,
@@ -34,26 +37,37 @@ import {
   type LatLng,
 } from "@/lib/geo";
 import { DEMO_USER_ID } from "@/lib/demo-user";
-import type { Place, StampCard } from "@/lib/db/types";
+import type { Place, PlaceCategory } from "@/lib/db/types";
 
 export const runtime = "nodejs";
 
 const GEOFENCE_M = 75;
 const MAX_ACCURACY_M = 50;
 
-const CheckInSchema = z.object({
-  lat: z.coerce.number().min(-90).max(90),
-  lng: z.coerce.number().min(-180).max(180),
-  accuracy: z.coerce.number().min(0).optional(),
-  routeId: z.string().optional(),
-  placeId: z.string().optional(),
-  // Demo-only: skip the physical geofence/accuracy gates so collect works
-  // without being at the place. Labeled DEMO in the UI (REQ-1.3).
-  teleport: z
-    .union([z.literal("true"), z.literal("false"), z.boolean()])
-    .optional()
-    .transform((v) => v === true || v === "true"),
-});
+const boolFlag = z
+  .union([z.literal("true"), z.literal("false"), z.boolean()])
+  .optional()
+  .transform((v) => v === true || v === "true");
+
+const CheckInSchema = z
+  .object({
+    lat: z.coerce.number().min(-90).max(90),
+    lng: z.coerce.number().min(-180).max(180),
+    accuracy: z.coerce.number().min(0).optional(),
+    routeId: z.string().optional(),
+    placeId: z.string().min(1).optional(),
+    // For a new, unseeded place: the user types a name + picks a category.
+    name: z.string().trim().min(1).max(80).optional(),
+    category: z.enum(STAMP_CATEGORIES).optional(),
+    // Required privacy guard (REQ-4.6). The photo is never stored unless true.
+    noPeople: boolFlag,
+    // Demo-only: skip the physical geofence/accuracy gates so collect works
+    // without being at the place. Labeled DEMO in the UI (REQ-1.3).
+    teleport: boolFlag,
+  })
+  .refine((v) => Boolean(v.placeId) || Boolean(v.name && v.category), {
+    message: "Provide placeId, or a name and category for a new place.",
+  });
 
 const ACCEPTED_MEDIA = new Set(["image/jpeg", "image/png"]);
 
@@ -93,12 +107,26 @@ export async function POST(request: Request): Promise<Response> {
     accuracy: form.get("accuracy") ?? undefined,
     routeId: form.get("routeId") ?? undefined,
     placeId: form.get("placeId") ?? undefined,
+    name: form.get("name") ?? undefined,
+    category: form.get("category") ?? undefined,
+    noPeople: form.get("noPeople") ?? undefined,
     teleport: form.get("teleport") ?? undefined,
   });
   if (!parsed.success) {
     return bail(400, "Invalid check-in parameters.");
   }
-  const { lat, lng, accuracy, routeId, placeId, teleport } = parsed.data;
+  const { lat, lng, accuracy, routeId, placeId, name, category, noPeople, teleport } =
+    parsed.data;
+
+  // Privacy guard (REQ-4.6): without the "no people" confirmation we store
+  // nothing and never read the photo bytes. This replaces image analysis.
+  if (!noPeople) {
+    return bail(
+      422,
+      "Please confirm that no people are the main subject of this photo.",
+      { code: "no_people_required" },
+    );
+  }
 
   const photo = form.get("photo");
   if (!(photo instanceof File) || photo.size === 0) {
@@ -134,57 +162,55 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
   } else {
+    // New, unseeded spot. If an existing seeded place is within the geofence we
+    // collect that instead of duplicating it; otherwise create a user place
+    // from the typed name + category at rounded (privacy) coords.
     const all = await store.getPlaces();
-    place = nearestWithin(userPos, all, GEOFENCE_M);
+    place = teleport ? null : nearestWithin(userPos, all, GEOFENCE_M);
     if (!place) {
-      // New, unseeded spot: create a user place at rounded (privacy) coords.
       const rounded = roundCoord(userPos);
       place = await store.createPlace({
-        name: "Unknown Spot",
+        name: name as string,
         lat: rounded.lat,
         lng: rounded.lng,
         neighborhood: null,
-        category: "other",
+        category: category as PlaceCategory,
         source: "user",
         createdBy: DEMO_USER_ID,
+        baselineRarity: "common",
       });
     }
   }
 
-  // AI card (design.md §7 step 4). Run before storing anything so a rejected or
-  // refused photo is never persisted (REQ-4.4, 4.8).
+  // Build the card from the place (design.md §6, §7 steps 3 & 6). The final
+  // rarity is the place's baseline rarity adjusted by its prior collect count.
+  const priorCollectCount = place.collectCount;
+  const card =
+    place.source === "seed"
+      ? buildStampCard({
+          source: "seed",
+          name: place.name,
+          category: place.category,
+          baselineRarity: place.baselineRarity,
+          priorCollectCount,
+        })
+      : buildStampCard({
+          source: "user",
+          name: place.name,
+          category: place.category,
+          priorCollectCount,
+        });
+
+  // Store the (client-resized, EXIF-stripped) photo exactly as uploaded. The
+  // demo store keeps it as an in-memory data URL; the client already strips
+  // EXIF/location before upload (REQ-14.8). The server never reads EXIF and
+  // applies no filter (REQ-4.5).
   const bytes = new Uint8Array(await photo.arrayBuffer());
-  let card: StampCard;
-  let aiSource: "claude" | "mock";
-  try {
-    const result = await generateCard(bytes, mediaType as "image/jpeg" | "image/png");
-    card = result.card;
-    aiSource = result.source;
-  } catch {
-    return bail(502, "Couldn’t reach the card generator. Please try again.");
-  }
-
-  if (!card.accepted) {
-    // Store nothing; ask the user to retake (REQ-4.8).
-    return NextResponse.json(
-      {
-        accepted: false,
-        reason: card.rejectReason ?? "This photo can’t be collected.",
-        message:
-          "We couldn’t turn this into a stamp — try a photo of a place, not a person. No photo was saved.",
-      },
-      { status: 200 },
-    );
-  }
-
-  // Store the (client-resized, EXIF-stripped) photo. Demo store keeps it as an
-  // in-memory data URL; the client already strips EXIF/location before upload
-  // (REQ-14.8). Server never trusts or reads EXIF.
   const base64 = Buffer.from(bytes).toString("base64");
   const photoPath = `data:${mediaType};base64,${base64}`;
 
   // Persist a route if the client tracked one inline (full browser tracking is
-  // M3). For M2 we persist a minimal route record when coords are present.
+  // B1). For B0 we persist a minimal route record when coords are present.
   let persistedRouteId: string | null = routeId ?? null;
   if (!persistedRouteId) {
     const route = await store.createRoute({
@@ -198,8 +224,8 @@ export async function POST(request: Request): Promise<Response> {
     persistedRouteId = route.id;
   }
 
-  // Final rarity adjustment and the full points formula arrive in M4; M2 uses
-  // the AI-suggested rarity and the rarity base (design.md §8).
+  // Points: B0 uses the rarity base of the final (adjusted) rarity. The full
+  // formula (movement/effort/goal/repeat) lands in B1 (design.md §8).
   const rarity = card.rarity;
   const points = rarityBase(rarity);
 
@@ -220,6 +246,5 @@ export async function POST(request: Request): Promise<Response> {
     accepted: true,
     stamp,
     place: updatedPlace ?? place,
-    aiSource,
   });
 }

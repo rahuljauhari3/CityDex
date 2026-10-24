@@ -5,9 +5,9 @@
  * store expose identical shapes. Pure data only — no I/O here.
  */
 
-import type { StampCard } from "@/lib/ai/schema";
+import type { StampCard } from "@/lib/stamp/card";
 
-export type { StampCard } from "@/lib/ai/schema";
+export type { StampCard } from "@/lib/stamp/card";
 
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 

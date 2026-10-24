@@ -49,7 +49,9 @@ export default function RootLayout({
       className={`${pixelifySans.variable} ${silkscreen.variable} h-full`}
     >
       <body className="min-h-full flex flex-col bg-parchment text-wood-dark">
-        <main className="flex-1 pb-16">{children}</main>
+        <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+          {children}
+        </main>
         <TabBar />
       </body>
     </html>

@@ -27,14 +27,15 @@ function prefersReducedMotion(): boolean {
 
 /**
  * Stamp-card reveal (ui.md "Stamp card", REQ-5.1, 5.4, 5.5): parchment card
- * with a rarity-colored glowing frame, pixelated photo with a subtle dither,
- * pixel-font name, italic lore, and a stats row with orange numbers. The stats
- * row is structured so M3 can drop distance/steps/HR/kcal in beside the points.
+ * with a rarity-colored glowing frame, the photo shown **exactly as uploaded**
+ * (no filter, no dither), the place name in a pixel font, a category label, and
+ * a stats row with orange numbers. The stats row is structured so B1 can drop
+ * distance/steps/HR/kcal in beside the points.
  *
  * Accessibility: role="dialog" aria-modal, Close focused on mount, Escape
- * closes. Glow/flip are gated on prefers-reduced-motion (JS + the globals.css
- * reduce block). A muted-by-default haptic "pop" fires only when motion is not
- * reduced.
+ * closes, focus trapped. Glow/flip are gated on prefers-reduced-motion (JS +
+ * the globals.css reduce block). A muted-by-default haptic "pop" fires only
+ * when motion is not reduced.
  */
 export function StampCardReveal({
   stamp,
@@ -137,7 +138,7 @@ export function StampCardReveal({
             ✕
           </button>
 
-          {/* Photo with pixelated scaling + subtle dither overlay. */}
+          {/* Photo shown exactly as uploaded — no filter, no dither (REQ-4.5). */}
           <div
             className="relative aspect-square w-full overflow-hidden border-4 border-wood-dark bg-wood-dark/10"
             style={{ borderColor: frameHex }}
@@ -147,17 +148,13 @@ export function StampCardReveal({
               <img
                 src={stamp.photoPath}
                 alt={`Photo of ${card.name}`}
-                className="pixelated h-full w-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center font-heading text-4xl text-wood-dark/50">
                 ?
               </div>
             )}
-            <div
-              aria-hidden="true"
-              className="stamp-dither pointer-events-none absolute inset-0"
-            />
           </div>
 
           {/* Name + category/rarity label. */}
@@ -184,26 +181,7 @@ export function StampCardReveal({
             </span>
           </p>
 
-          {/* Lore, italic. */}
-          <p className="mt-2 text-base italic leading-snug text-wood-dark">
-            “{card.lore}”
-          </p>
-
-          {/* Tags. */}
-          {card.tags.length > 0 && (
-            <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Tags">
-              {card.tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="border-2 border-wood-dark bg-wood-light/30 px-1.5 py-0.5 font-label text-[11px] text-wood-dark"
-                >
-                  {tag}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Stats row — orange numbers. M3 adds distance/steps/HR/kcal cells. */}
+          {/* Stats row — orange numbers. B1 adds distance/steps/HR/kcal cells. */}
           <dl className="mt-3 grid grid-cols-2 gap-2 border-t-4 border-wood-dark pt-3 text-sm">
             <div>
               <dt className="font-label text-xs uppercase tracking-wide text-wood-dark/70">
@@ -221,7 +199,7 @@ export function StampCardReveal({
             </div>
           </dl>
 
-          {/* Health stats land in M3. */}
+          {/* Health stats land in B1. */}
           <p className="mt-2 font-label text-[11px] text-wood-dark/60">
             Health stats attach on your next check-in.
           </p>

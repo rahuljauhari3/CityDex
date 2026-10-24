@@ -2,33 +2,43 @@
  * Central config + capability flags (design.md §2).
  *
  * Reads environment once and exposes typed flags. The app must never crash from
- * a missing key — absence of a key selects the demo/mock fallback instead
+ * a missing key — absence of a key selects the demo fallback instead
  * (REQ-1.3, REQ-1.6, REQ-1.7).
  *
  * This module is safe to import anywhere, but only the `NEXT_PUBLIC_*` values
- * are meaningful on the client. Secret-touching flags (Anthropic, service role,
- * provider secrets) are only read in server code.
+ * are meaningful on the client. Secret-touching flags (service role, provider
+ * secrets) are only read in server code.
+ *
+ * The app uses **no AI** — the stamp card is assembled from place data + the
+ * uploaded photo, so there is no AI-runtime config here (tech.md, PLAN.md §6).
  */
 
 function hasValue(v: string | undefined | null): boolean {
   return typeof v === "string" && v.trim().length > 0;
 }
 
-/** DEMO_MODE=true forces demo users + demo health provider + mock card. */
-export const isDemoMode: boolean = process.env.DEMO_MODE === "true";
-
 /** True when both public Supabase vars are present; otherwise use memoryStore. */
 export const hasSupabase: boolean =
   hasValue(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
   hasValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
+/**
+ * Demo mode (REQ-1.3, QA #1). Demo mode is **on by default** so the full flow
+ * works with no keys. It is only off when `DEMO_MODE=false` is set explicitly
+ * *and* Supabase is configured (a real backend to fall back to). If Supabase
+ * is not configured, demo mode is always on regardless of `DEMO_MODE`, because
+ * there is no other store to use.
+ */
+export const isDemoMode: boolean = (() => {
+  const raw = process.env.DEMO_MODE?.trim().toLowerCase();
+  if (raw === "false" && hasSupabase) return false;
+  return true;
+})();
+
 /** True when the service role key is present (server-only paths). */
 export const hasSupabaseServiceRole: boolean = hasValue(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
-
-/** True when an Anthropic key is present; otherwise use the mock card. */
-export const hasAnthropic: boolean = hasValue(process.env.ANTHROPIC_API_KEY);
 
 /** Real OAuth providers are enabled only when both client id + secret exist. */
 export const hasStrava: boolean =
@@ -51,7 +61,6 @@ export const config = {
   isDemoMode,
   hasSupabase,
   hasSupabaseServiceRole,
-  hasAnthropic,
   hasStrava,
   hasWhoop,
   hasFitbit,
