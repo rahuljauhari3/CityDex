@@ -4,10 +4,11 @@ import { PixelPanel } from "@/components/ui/PixelPanel";
 import { DemoChip, HealthStats, NotMedicalAdvice } from "@/components/health/HealthBits";
 import { KudosButton } from "@/components/feed/KudosButton";
 import { FriendsPanel } from "@/components/feed/FriendsPanel";
+import { SocialHealthStrip } from "@/components/feed/SocialHealth";
 import { RARITY_LABEL_HEX, rarityHex } from "@/components/map/rarity";
 import { DEMO_USER_ID } from "@/lib/demo-user";
 import type { LeaderboardMetric, LeaderboardScope, LeaderboardWindow } from "@/lib/db/types";
-import { getFeed, getFriendsView, getLeaderboard, getViewer } from "@/lib/app/views";
+import { getFeed, getFriendsView, getLeaderboard, getSocialWeek, getViewer } from "@/lib/app/views";
 
 export const metadata: Metadata = { title: "Feed · CityDex" };
 export const dynamic = "force-dynamic";
@@ -64,51 +65,89 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
 }
 
 async function FeedList() {
-  const items = await getFeed(DEMO_USER_ID);
+  const [items, social] = await Promise.all([getFeed(DEMO_USER_ID), getSocialWeek(DEMO_USER_ID)]);
+  type Entry =
+    | { kind: "stamp"; at: string; item: (typeof items)[number] }
+    | { kind: "milestone"; at: string; item: (typeof social.milestones)[number] };
+  const entries: Entry[] = [
+    ...items.map((item) => ({ kind: "stamp" as const, at: item.createdAt, item })),
+    ...social.milestones.map((item) => ({ kind: "milestone" as const, at: item.at, item })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
+
   return (
-    <ul className="space-y-3">
-      {items.map((it) => (
-        <li key={it.stampId}>
-          <PixelPanel className="p-3">
-            <div className="flex items-center gap-2">
-              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center border-2 border-wood-dark bg-wood-light text-xl">
-                {it.avatarEmoji}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-wood-dark">
-                  <strong>@{it.username}</strong> collected <strong>{it.placeName}</strong>
-                </p>
-                <p className="font-label text-[10px] uppercase text-wood-dark/70">
-                  {ago(it.createdAt)} ·{" "}
-                  <span style={{ color: RARITY_LABEL_HEX[it.rarity] }}>{it.rarity}</span>
-                  {it.neighborhood ? ` · ${it.neighborhood}` : ""}
-                </p>
+    <>
+      <SocialHealthStrip members={social.members} challenges={social.challenges} isDemo={social.isDemo} />
+      <ul className="space-y-3">
+        {entries.map((e) =>
+          e.kind === "milestone" ? (
+            <li key={e.item.id}>
+              <div className="border-4 border-wood-dark bg-wood-dark p-3 text-parchment pixel-shadow">
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center border-2 border-parchment bg-wood-light text-xl">
+                    {e.item.avatarEmoji}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm">
+                      <strong>{e.item.userId === DEMO_USER_ID ? "You" : `@${e.item.username}`}</strong> {e.item.title}
+                    </p>
+                    <p className="font-label text-[10px] uppercase text-parchment/75">
+                      {ago(e.item.at)} · health milestone{e.item.isDemo ? " · demo" : ""}
+                    </p>
+                  </div>
+                  <span aria-hidden="true" className="text-3xl">{e.item.icon}</span>
+                </div>
+                <p className="mt-1 text-sm text-parchment/90">{e.item.detail}</p>
+                <div className="mt-2 flex justify-end">
+                  <KudosButton stampId={e.item.id} count={e.item.kudosCount} given={e.item.viewerGaveKudos} own={e.item.userId === DEMO_USER_ID} />
+                </div>
               </div>
-              <div
-                className="h-12 w-12 shrink-0 overflow-hidden border-4"
-                style={{ borderColor: rarityHex(it.rarity), background: "rgba(91,58,41,0.1)" }}
-              >
-                {it.photoPath ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={it.photoPath} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span aria-hidden="true" className="flex h-full items-center justify-center font-heading text-wood-dark/50">★</span>
-                )}
-              </div>
-            </div>
-            {it.healthSnapshot && (
-              <div className="mt-2 border-t-2 border-wood-dark/30 pt-2">
-                <HealthStats snapshot={it.healthSnapshot} compact />
-                {it.healthSnapshot.isDemo && <DemoChip className="mt-1" />}
-              </div>
-            )}
-            <div className="mt-2 flex justify-end">
-              <KudosButton stampId={it.stampId} count={it.kudosCount} given={it.viewerGaveKudos} own={it.userId === DEMO_USER_ID} />
-            </div>
-          </PixelPanel>
-        </li>
-      ))}
-    </ul>
+            </li>
+          ) : (
+            <li key={e.item.stampId}>
+              <StampFeedCard it={e.item} />
+            </li>
+          ),
+        )}
+      </ul>
+    </>
+  );
+}
+
+function StampFeedCard({ it }: { it: Awaited<ReturnType<typeof getFeed>>[number] }) {
+  return (
+    <PixelPanel className="p-3">
+      <div className="flex items-center gap-2">
+        <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center border-2 border-wood-dark bg-wood-light text-xl">
+          {it.avatarEmoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-wood-dark">
+            <strong>{it.userId === DEMO_USER_ID ? "You" : `@${it.username}`}</strong> collected <strong>{it.placeName}</strong>
+          </p>
+          <p className="font-label text-[10px] uppercase text-wood-dark/70">
+            {ago(it.createdAt)} · <span style={{ color: RARITY_LABEL_HEX[it.rarity] }}>{it.rarity}</span>
+            {it.neighborhood ? ` · ${it.neighborhood}` : ""}
+          </p>
+        </div>
+        <div className="h-12 w-12 shrink-0 overflow-hidden border-4" style={{ borderColor: rarityHex(it.rarity), background: "rgba(91,58,41,0.1)" }}>
+          {it.photoPath ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={it.photoPath} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span aria-hidden="true" className="flex h-full items-center justify-center font-heading text-wood-dark/50">★</span>
+          )}
+        </div>
+      </div>
+      {it.healthSnapshot && (
+        <div className="mt-2 border-t-2 border-wood-dark/30 pt-2">
+          <HealthStats snapshot={it.healthSnapshot} compact />
+          {it.healthSnapshot.isDemo && <DemoChip className="mt-1" />}
+        </div>
+      )}
+      <div className="mt-2 flex justify-end">
+        <KudosButton stampId={it.stampId} count={it.kudosCount} given={it.viewerGaveKudos} own={it.userId === DEMO_USER_ID} />
+      </div>
+    </PixelPanel>
   );
 }
 

@@ -23,6 +23,7 @@ import { zone2Plus } from "@/lib/health/zones";
 import { computePoints } from "@/lib/points/compute";
 import { buildStampCard } from "@/lib/stamp/build";
 import { addDays, nyDate } from "@/lib/time";
+import { milestoneId } from "@/lib/social/milestones";
 
 interface DemoPerson {
   id: string;
@@ -251,6 +252,12 @@ export function buildDemoWorld(places: Place[], now: Date): DemoWorld {
         kudos.push({ stampId: s.id, userId: fid, createdAt: s.createdAt });
       }
     }
+  }
+
+  // Friends cheer your Esplanade fitness milestone (see lib/social/milestones).
+  const esplanadeMilestone = milestoneId(DEMO_USER_ID, "insight", "seed_charles_esplanade");
+  for (const fid of ["demo_maya", "demo_priya"]) {
+    kudos.push({ stampId: esplanadeMilestone, userId: fid, createdAt: now.toISOString() });
   }
 
   return { profiles, stamps, goals, friendships, kudos, userBadges, connections };

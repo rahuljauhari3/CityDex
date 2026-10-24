@@ -24,6 +24,8 @@ import { goalProgress, stampsOnDates, weeklySummary } from "@/lib/health/summary
 import { computePlaceEffects, computePlaceInsights } from "@/lib/insights/place";
 import { computeTrends, recoveryEstimate } from "@/lib/health/trends";
 import { buildHealthStory } from "@/lib/health/story";
+import { buildMilestones, capMilestones, type Milestone } from "@/lib/social/milestones";
+import { weeklyChallenges, type MemberWeek } from "@/lib/social/challenges";
 import { buildLeaderboard, metricValues } from "@/lib/leaderboard";
 import { recommend } from "@/lib/recs/score";
 import { addDays, nyDate, nyWeekStart, weekDates } from "@/lib/time";
@@ -261,4 +263,67 @@ export async function getDex(userId: string) {
     place,
     visits: visits.get(place.id) ?? 0,
   }));
+}
+
+/**
+ * Social health for the feed: your circle's week (you + accepted friends),
+ * weekly challenges, and health milestones from the last 7 days.
+ */
+export async function getSocialWeek(userId: string) {
+  const store = getStore();
+  const friends = await friendIdsOf(userId);
+  const ids = [userId, ...friends];
+  const profiles = new Map((await store.listProfiles()).map((p) => [p.id, p]));
+  const now = new Date();
+  const weekStart = nyWeekStart(now);
+  const dates = weekDates(weekStart);
+  const places = await placeMap();
+  const green = new Set(["park", "nature", "water"]);
+  const since = now.getTime() - 7 * 86_400_000;
+
+  const members: MemberWeek[] = [];
+  const milestones: (Milestone & { username: string; avatarEmoji: string })[] = [];
+  for (const id of ids) {
+    const profile = profiles.get(id);
+    if (!profile) continue;
+    const week = await dailyFor(id, dates);
+    const stamps = await store.getStampsByUser(id);
+    const weekStamps = stampsOnDates(stamps, dates);
+    members.push({
+      userId: id,
+      username: profile.username,
+      avatarEmoji: profile.avatarEmoji,
+      steps: week.reduce((s, d) => s + (d.values.steps ?? 0), 0),
+      cardioMinutes: week.reduce((s, d) => s + (d.values.zoneMinutes ?? 0), 0),
+      greenVisits: weekStamps.filter((s) => green.has(s.card.category)).length,
+      activeDays: week.filter((d) => (d.values.zoneMinutes ?? 0) >= 20 || (d.values.steps ?? 0) >= 8000).length,
+      isViewer: id === userId,
+    });
+    const ms = buildMilestones({
+      profile,
+      badges: await store.getUserBadges(id),
+      week,
+      insights: computePlaceInsights(stamps, places),
+      weekStart,
+      since,
+    });
+    milestones.push(...ms.map((m) => ({ ...m, username: profile.username, avatarEmoji: profile.avatarEmoji })));
+  }
+
+  const shown = capMilestones(milestones);
+  const kudos = await store.listKudos(shown.map((m) => m.id));
+  const withKudos = shown
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .map((m) => {
+      const k = kudos.filter((x) => x.stampId === m.id);
+      return { ...m, kudosCount: k.length, viewerGaveKudos: k.some((x) => x.userId === userId) };
+    });
+
+  return {
+    weekStart,
+    members: members.sort((a, b) => b.cardioMinutes - a.cardioMinutes),
+    challenges: weeklyChallenges(members),
+    milestones: withKudos,
+    isDemo: members.length > 0 && ids.some((id) => profiles.get(id)?.isDemo),
+  };
 }
