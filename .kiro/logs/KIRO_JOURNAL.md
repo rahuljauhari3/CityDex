@@ -53,3 +53,23 @@ denied-command regex left a bare `"*"` in each shell deny rule's `match` array,
 which denied ALL shell commands. Fixed by replacing that bare `"*"` with
 `"curl * | sh*"` in `citydex-builder`, `citydex-reviewer`, `citydex-tester`,
 and `citydex-ui`. The builder's `"tools": ["*"]` array was left unchanged.
+
+## M0 — Scaffold (what Kiro features helped)
+- **Spec (`.kiro/specs/citydex-core/`)** drove the work: `tasks.md` gave the exact
+  M0 task breakdown (1–9) to track and check off, `design.md` §1–§4 fixed the
+  App Router layout, the `Store` interface, and the demo-mode selection logic, so
+  there was no guessing about structure.
+- **Steering (always-on)** kept the scaffold on-spec without re-prompting:
+  `ui.md` supplied the exact pixel palette/rarity/fonts baked into
+  `globals.css` + `layout.tsx`; `tech.md` fixed the env var list for
+  `.env.example` and the demo-fallback rule behind `lib/config.ts`;
+  `structure.md` dictated the `lib/` layout and the server-only isolation
+  (`import "server-only"` in `lib/db/index.ts` + `supabase.ts`).
+- **`citydex-reviewer` sub-agent** did a read-only M0 audit and caught two real
+  MEDIUM issues that the build wouldn't flag: a locked `maximumScale: 1` viewport
+  (WCAG 1.4.4 pinch-zoom), and SVG-only PWA icons with no raster fallback. Both
+  were fixed before commit (added a dependency-free PNG icon generator in
+  `scripts/generate-icons.mjs`). It confirmed secret isolation and demo-fallback
+  correctness, which let me commit with confidence.
+- **Workflow steering** enforced the pre-commit gate (lint → tsc --noEmit → test,
+  plus a build) and the `M0: …` commit message with no Co-Authored-By trailer.
