@@ -1,0 +1,100 @@
+{
+  "_source": "CDC PLACES: Local Data for Better Health, County Data, 2025 release (data.cdc.gov dataset swc5-untb). Crude prevalence among adults, BRFSS model-based estimates.",
+  "sourceUrl": "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&locationname=Suffolk",
+  "release": "2025",
+  "county": "Suffolk County, MA",
+  "locationId": "25025",
+  "adultPopulation": 646638,
+  "measures": [
+    {
+      "id": "LPA",
+      "measure": "No leisure-time physical activity among adults",
+      "short": "Physical Inactivity",
+      "value": 23.8,
+      "low": 20.4,
+      "high": 27.4,
+      "year": 2023
+    },
+    {
+      "id": "OBESITY",
+      "measure": "Obesity among adults",
+      "short": "Obesity",
+      "value": 24.2,
+      "low": 20.7,
+      "high": 27.8,
+      "year": 2023
+    },
+    {
+      "id": "SLEEP",
+      "measure": "Short sleep duration among adults",
+      "short": "Short Sleep Duration",
+      "value": 34.3,
+      "low": 30.8,
+      "high": 38.1,
+      "year": 2022
+    },
+    {
+      "id": "GHLTH",
+      "measure": "Fair or poor self-rated health status among adults",
+      "short": "General Health",
+      "value": 17.2,
+      "low": 14.7,
+      "high": 19.8,
+      "year": 2023
+    },
+    {
+      "id": "BPHIGH",
+      "measure": "High blood pressure among adults",
+      "short": "High Blood Pressure",
+      "value": 27.4,
+      "low": 25.0,
+      "high": 29.9,
+      "year": 2023
+    },
+    {
+      "id": "DIABETES",
+      "measure": "Diagnosed diabetes among adults",
+      "short": "Diabetes",
+      "value": 9.3,
+      "low": 8.1,
+      "high": 10.5,
+      "year": 2023
+    },
+    {
+      "id": "DEPRESSION",
+      "measure": "Depression among adults",
+      "short": "Depression",
+      "value": 23.2,
+      "low": 20.6,
+      "high": 25.7,
+      "year": 2023
+    },
+    {
+      "id": "MHLTH",
+      "measure": "Frequent mental distress among adults",
+      "short": "Frequent Mental Distress",
+      "value": 17.3,
+      "low": 15.3,
+      "high": 19.4,
+      "year": 2023
+    },
+    {
+      "id": "LONELINESS",
+      "measure": "Loneliness among adults",
+      "short": "Loneliness",
+      "value": 38.4,
+      "low": 34.6,
+      "high": 42.5,
+      "year": 2023
+    },
+    {
+      "id": "CHD",
+      "measure": "Coronary heart disease among adults",
+      "short": "Coronary Heart Disease",
+      "value": 4.8,
+      "low": 4.3,
+      "high": 5.4,
+      "year": 2023
+    }
+  ]
+}

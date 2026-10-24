@@ -57,3 +57,13 @@ export function buildStampCard(input: BuildCardInput): StampCard {
   // Validate at the boundary so a malformed name/category never persists.
   return StampCardSchema.parse(card);
 }
+
+/** Card for a stored place: seeded places keep their rarity, user places start common. */
+export function cardForPlace(
+  place: { name: string; category: StampCategory; source: "seed" | "user"; baselineRarity: StampRarity },
+  priorCollectCount: number,
+): StampCard {
+  return place.source === "seed"
+    ? buildStampCard({ source: "seed", name: place.name, category: place.category, baselineRarity: place.baselineRarity, priorCollectCount })
+    : buildStampCard({ source: "user", name: place.name, category: place.category, priorCollectCount });
+}

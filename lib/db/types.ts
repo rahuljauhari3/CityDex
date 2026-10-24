@@ -56,6 +56,14 @@ export interface Profile {
   homeNeighborhood: string | null;
   showRouteMap: boolean;
   createdAt: string;
+  /** Pixel avatar glyph shown on leaderboards and the feed. */
+  avatarEmoji: string;
+  /** Used for the 220 − age max-HR estimate behind HR zones. */
+  age: number | null;
+  inviteCode: string;
+  consentedAt: string | null;
+  onboardedAt: string | null;
+  isDemo: boolean;
 }
 
 export interface Goal {
@@ -108,7 +116,45 @@ export interface HealthSnapshot {
   hrMax?: number;
   hrZoneMinutes?: { z1: number; z2: number; z3: number; z4: number; z5: number };
   spo2Avg?: number;
+  durationMin?: number;
   isDemo: boolean;
+  /** Which provider (or "est" for browser estimates) supplied each field. */
+  fieldSources?: Partial<Record<HealthField, ProviderId | "est">>;
+}
+
+export type HealthField =
+  | "steps"
+  | "distanceM"
+  | "activeKcal"
+  | "hrAvg"
+  | "hrMax"
+  | "hrZoneMinutes"
+  | "spo2Avg";
+
+/** One day of totals from a provider (drives goals and weekly summaries). */
+export interface DailyHealth {
+  date: string; // YYYY-MM-DD (America/New_York)
+  source: ProviderId;
+  isDemo: boolean;
+  steps?: number;
+  activeKcal?: number;
+  zoneMinutes?: number; // zone 2+ minutes
+  restingHr?: number;
+  spo2Avg?: number;
+  sleepHours?: number;
+}
+
+export interface HealthConnection {
+  userId: string;
+  provider: ProviderId;
+  connectedAt: string;
+  /** AES-GCM encrypted tokens (server-only, never sent to the client). */
+  accessTokenEnc?: string | null;
+  refreshTokenEnc?: string | null;
+  expiresAt?: string | null;
+  scopes?: string | null;
+  /** For uploads (Apple export): summary of what was imported. */
+  meta?: Record<string, unknown>;
 }
 
 export interface Stamp {
@@ -120,8 +166,18 @@ export interface Stamp {
   card: StampCard;
   rarity: Rarity;
   points: number;
+  pointsBreakdown?: PointsSummary | null;
   healthSnapshot: HealthSnapshot | null;
   createdAt: string;
+}
+
+export interface PointsSummary {
+  base: number;
+  discoverer: number;
+  movement: number;
+  effort: number;
+  multiplier: number;
+  total: number;
 }
 
 export interface Badge {
@@ -210,7 +266,9 @@ export interface CreateStampInput {
   card: StampCard;
   rarity: Rarity;
   points: number;
+  pointsBreakdown?: PointsSummary | null;
   healthSnapshot?: HealthSnapshot | null;
+  createdAt?: string;
 }
 
 export interface CreateRouteInput {

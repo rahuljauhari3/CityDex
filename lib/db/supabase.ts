@@ -1,11 +1,8 @@
 /**
- * Supabase-backed store skeleton (design.md §4).
- *
- * Selected by `getStore()` when `hasSupabase` is true. The real Postgres +
- * Storage queries and RLS land in a later milestone (M7). This skeleton exists
- * so the selection wiring compiles; each method throws until implemented, which
- * is unreachable in demo mode (the memory store is used when Supabase is not
- * configured).
+ * Supabase-backed store (design.md §4). Selected by `getStore()` only when
+ * Supabase keys are present. The SQL schema with RLS lives in
+ * `supabase/schema.sql`; the query layer is not implemented yet, so every
+ * method throws a clear error. Demo mode never reaches this module.
  *
  * Server-only module: must never be imported into a client component.
  */
@@ -13,30 +10,11 @@
 import "server-only";
 import type { Store } from "./store";
 
-const NOT_IMPLEMENTED = "supabaseStore is not implemented yet (see M7).";
+const NOT_IMPLEMENTED =
+  "supabaseStore is not implemented yet. Unset NEXT_PUBLIC_SUPABASE_URL to use the demo store.";
 
-function notImplemented(): never {
-  throw new Error(NOT_IMPLEMENTED);
-}
-
-export const supabaseStore: Store = {
-  getPlaces: notImplemented,
-  getPlace: notImplemented,
-  createPlace: notImplemented,
-  recordCollection: notImplemented,
-  createStamp: notImplemented,
-  getStampsByUser: notImplemented,
-  getDexForUser: notImplemented,
-  createRoute: notImplemented,
-  getGoals: notImplemented,
-  upsertGoal: notImplemented,
-  getLeaderboard: notImplemented,
-  addFriend: notImplemented,
-  acceptFriend: notImplemented,
-  listFriends: notImplemented,
-  getFeed: notImplemented,
-  addKudos: notImplemented,
-  listBadges: notImplemented,
-  awardBadge: notImplemented,
-  deleteAccount: notImplemented,
-};
+export const supabaseStore: Store = new Proxy({} as Store, {
+  get() {
+    return () => Promise.reject(new Error(NOT_IMPLEMENTED));
+  },
+});

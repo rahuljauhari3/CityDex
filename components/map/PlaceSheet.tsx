@@ -30,6 +30,8 @@ export function PlaceSheet({
   userPos,
   accuracyM,
   demoMode,
+  route,
+  onRouteUsed,
   onClose,
   onCollected,
 }: {
@@ -37,6 +39,8 @@ export function PlaceSheet({
   userPos: { lat: number; lng: number } | null;
   accuracyM: number | null;
   demoMode: boolean;
+  route: { startedAt: string; distanceM: number } | null;
+  onRouteUsed: () => void;
   onClose: () => void;
   onCollected: (result: { stamp: Stamp; place: Place }) => void;
 }) {
@@ -136,6 +140,8 @@ export function PlaceSheet({
             userPos={userPos}
             accuracyM={accuracyM}
             demoMode={demoMode}
+            route={route}
+            onRouteUsed={onRouteUsed}
             onCollected={onCollected}
           />
         </div>

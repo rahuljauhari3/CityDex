@@ -37,8 +37,19 @@ interface CollectFlowProps {
   accuracyM: number | null;
   /** Demo mode enables the "teleport to place" collect option (REQ-1.3). */
   demoMode: boolean;
+  /** Active browser-tracked walk, if any (start time + distance). */
+  route?: { startedAt: string; distanceM: number } | null;
+  /** Ends the tracked walk once a check-in used it. */
+  onRouteUsed?: () => void;
   /** Called after a successful collect so the map/Dex can refresh. */
   onCollected?: (result: { stamp: Stamp; place: Place }) => void;
+}
+
+export interface NewBadge {
+  slug: string;
+  name: string;
+  icon: string;
+  description: string;
 }
 
 /** Human-friendly distance for the out-of-range hint (QA #3). */
@@ -62,6 +73,8 @@ export function CollectFlow({
   userPos,
   accuracyM,
   demoMode,
+  route,
+  onRouteUsed,
   onCollected,
 }: CollectFlowProps) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -69,6 +82,11 @@ export function CollectFlow({
   const [message, setMessage] = useState<string | null>(null);
   const [stamp, setStamp] = useState<Stamp | null>(null);
   const [collectedPlace, setCollectedPlace] = useState<Place | null>(null);
+  const [extras, setExtras] = useState<{ newBadges: NewBadge[]; recommended: boolean; repeatVisit: boolean }>({
+    newBadges: [],
+    recommended: false,
+    repeatVisit: false,
+  });
   const [teleport, setTeleport] = useState(false);
   const [noPeople, setNoPeople] = useState(false);
 
@@ -142,7 +160,17 @@ export function CollectFlow({
         form.append("name", newName.trim());
         form.append("category", newCategory);
       }
-      if (demoMode && teleport) form.append("teleport", "true");
+      if (demoMode && teleport) {
+        form.append("teleport", "true");
+        if (userPos) {
+          form.append("fromLat", String(userPos.lat));
+          form.append("fromLng", String(userPos.lng));
+        }
+      }
+      if (route) {
+        form.append("routeStartedAt", route.startedAt);
+        form.append("routeDistanceM", String(Math.round(route.distanceM)));
+      }
 
       setPhase("uploading");
       const res = await fetch("/api/stamps", { method: "POST", body: form });
@@ -156,7 +184,13 @@ export function CollectFlow({
 
       setStamp(data.stamp as Stamp);
       setCollectedPlace(data.place as Place);
+      setExtras({
+        newBadges: (data.newBadges ?? []) as NewBadge[],
+        recommended: Boolean(data.recommended),
+        repeatVisit: Boolean(data.repeatVisit),
+      });
       setPhase("revealed");
+      if (route) onRouteUsed?.();
       onCollected?.({ stamp: data.stamp as Stamp, place: data.place as Place });
     } catch {
       setPhase("error");
@@ -297,6 +331,9 @@ export function CollectFlow({
       {phase === "revealed" && stamp && (
         <StampCardReveal
           stamp={stamp}
+          newBadges={extras.newBadges}
+          recommended={extras.recommended}
+          repeatVisit={extras.repeatVisit}
           place={
             collectedPlace
               ? { name: collectedPlace.name, neighborhood: collectedPlace.neighborhood }

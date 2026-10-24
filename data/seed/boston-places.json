@@ -2,48 +2,419 @@
   "_attribution": "Place names and coordinates are derived from OpenStreetMap and are © OpenStreetMap contributors, available under the Open Database License (ODbL). See https://www.openstreetmap.org/copyright. Rarity values are CityDex gameplay assignments, not OSM data.",
   "_note": "Curated set of real Boston/Cambridge points of interest. Coordinates are approximate (~within a building footprint). Do not call Overpass at runtime; this file is the source for the demo store.",
   "places": [
-    { "id": "seed_boston_common", "name": "Boston Common", "lat": 42.3551, "lng": -71.0657, "neighborhood": "Downtown", "category": "park", "rarity": "common" },
-    { "id": "seed_public_garden", "name": "Boston Public Garden", "lat": 42.3541, "lng": -71.0699, "neighborhood": "Back Bay", "category": "park", "rarity": "uncommon" },
-    { "id": "seed_make_way_ducklings", "name": "Make Way for Ducklings", "lat": 42.3561, "lng": -71.0693, "neighborhood": "Back Bay", "category": "statue", "rarity": "rare" },
-    { "id": "seed_swan_boats", "name": "Swan Boats", "lat": 42.3537, "lng": -71.0703, "neighborhood": "Back Bay", "category": "water", "rarity": "uncommon" },
-    { "id": "seed_shaw_memorial", "name": "Robert Gould Shaw Memorial", "lat": 42.3579, "lng": -71.0636, "neighborhood": "Beacon Hill", "category": "statue", "rarity": "rare" },
-    { "id": "seed_mass_state_house", "name": "Massachusetts State House", "lat": 42.3588, "lng": -71.0638, "neighborhood": "Beacon Hill", "category": "building", "rarity": "uncommon" },
-    { "id": "seed_acorn_street", "name": "Acorn Street", "lat": 42.3579, "lng": -71.0693, "neighborhood": "Beacon Hill", "category": "oddity", "rarity": "epic" },
-    { "id": "seed_faneuil_hall", "name": "Faneuil Hall", "lat": 42.3601, "lng": -71.0557, "neighborhood": "Downtown", "category": "building", "rarity": "uncommon" },
-    { "id": "seed_quincy_market", "name": "Quincy Market", "lat": 42.3600, "lng": -71.0545, "neighborhood": "Downtown", "category": "building", "rarity": "common" },
-    { "id": "seed_old_north_church", "name": "Old North Church", "lat": 42.3663, "lng": -71.0544, "neighborhood": "North End", "category": "building", "rarity": "rare" },
-    { "id": "seed_paul_revere_statue", "name": "Paul Revere Statue", "lat": 42.3655, "lng": -71.0542, "neighborhood": "North End", "category": "statue", "rarity": "uncommon" },
-    { "id": "seed_mikes_pastry", "name": "Mike's Pastry", "lat": 42.3636, "lng": -71.0548, "neighborhood": "North End", "category": "cafe", "rarity": "uncommon" },
-    { "id": "seed_caffe_vittoria", "name": "Caffè Vittoria", "lat": 42.3639, "lng": -71.0546, "neighborhood": "North End", "category": "cafe", "rarity": "common" },
-    { "id": "seed_td_garden", "name": "TD Garden", "lat": 42.3662, "lng": -71.0621, "neighborhood": "West End", "category": "building", "rarity": "common" },
-    { "id": "seed_zakim_bridge", "name": "Leonard P. Zakim Bunker Hill Bridge", "lat": 42.3690, "lng": -71.0637, "neighborhood": "Charlestown", "category": "building", "rarity": "rare" },
-    { "id": "seed_bunker_hill_monument", "name": "Bunker Hill Monument", "lat": 42.3765, "lng": -71.0608, "neighborhood": "Charlestown", "category": "statue", "rarity": "rare" },
-    { "id": "seed_uss_constitution", "name": "USS Constitution", "lat": 42.3724, "lng": -71.0564, "neighborhood": "Charlestown", "category": "water", "rarity": "epic" },
-    { "id": "seed_rose_kennedy_greenway", "name": "Rose Kennedy Greenway", "lat": 42.3601, "lng": -71.0519, "neighborhood": "Downtown", "category": "park", "rarity": "common" },
-    { "id": "seed_greenway_carousel", "name": "Greenway Carousel", "lat": 42.3609, "lng": -71.0507, "neighborhood": "Downtown", "category": "oddity", "rarity": "uncommon" },
-    { "id": "seed_boston_harborwalk", "name": "Boston Harborwalk", "lat": 42.3588, "lng": -71.0493, "neighborhood": "Waterfront", "category": "water", "rarity": "common" },
-    { "id": "seed_ica_boston", "name": "Institute of Contemporary Art", "lat": 42.3531, "lng": -71.0446, "neighborhood": "Seaport", "category": "building", "rarity": "uncommon" },
-    { "id": "seed_trinity_church", "name": "Trinity Church", "lat": 42.3548, "lng": -71.0745, "neighborhood": "Back Bay", "category": "building", "rarity": "rare" },
-    { "id": "seed_boston_public_library", "name": "Boston Public Library", "lat": 42.3493, "lng": -71.0779, "neighborhood": "Back Bay", "category": "building", "rarity": "uncommon" },
-    { "id": "seed_copley_square", "name": "Copley Square", "lat": 42.3499, "lng": -71.0765, "neighborhood": "Back Bay", "category": "park", "rarity": "common" },
-    { "id": "seed_newbury_street", "name": "Newbury Street", "lat": 42.3503, "lng": -71.0810, "neighborhood": "Back Bay", "category": "shop", "rarity": "common" },
-    { "id": "seed_pru_skywalk", "name": "Prudential Skywalk Observatory", "lat": 42.3473, "lng": -71.0821, "neighborhood": "Back Bay", "category": "building", "rarity": "rare" },
-    { "id": "seed_esplanade_hatch_shell", "name": "Hatch Memorial Shell", "lat": 42.3570, "lng": -71.0722, "neighborhood": "Back Bay", "category": "park", "rarity": "uncommon" },
-    { "id": "seed_charles_esplanade", "name": "Charles River Esplanade", "lat": 42.3562, "lng": -71.0738, "neighborhood": "Back Bay", "category": "nature", "rarity": "common" },
-    { "id": "seed_fenway_park", "name": "Fenway Park", "lat": 42.3467, "lng": -71.0972, "neighborhood": "Fenway", "category": "building", "rarity": "epic" },
-    { "id": "seed_citgo_sign", "name": "Citgo Sign", "lat": 42.3489, "lng": -71.0954, "neighborhood": "Fenway", "category": "oddity", "rarity": "rare" },
-    { "id": "seed_fenway_victory_gardens", "name": "Fenway Victory Gardens", "lat": 42.3432, "lng": -71.0914, "neighborhood": "Fenway", "category": "nature", "rarity": "uncommon" },
-    { "id": "seed_mfa_boston", "name": "Museum of Fine Arts", "lat": 42.3394, "lng": -71.0942, "neighborhood": "Fenway", "category": "building", "rarity": "rare" },
-    { "id": "seed_isabella_gardner", "name": "Isabella Stewart Gardner Museum", "lat": 42.3381, "lng": -71.0989, "neighborhood": "Fenway", "category": "building", "rarity": "rare" },
-    { "id": "seed_arnold_arboretum", "name": "Arnold Arboretum", "lat": 42.2986, "lng": -71.1245, "neighborhood": "Jamaica Plain", "category": "nature", "rarity": "uncommon" },
-    { "id": "seed_castle_island", "name": "Castle Island", "lat": 42.3376, "lng": -71.0106, "neighborhood": "South Boston", "category": "park", "rarity": "uncommon" },
-    { "id": "seed_sam_adams_statue", "name": "Samuel Adams Statue", "lat": 42.3599, "lng": -71.0565, "neighborhood": "Downtown", "category": "statue", "rarity": "uncommon" },
-    { "id": "seed_tortoise_hare_statues", "name": "Tortoise and Hare Statues", "lat": 42.3498, "lng": -71.0772, "neighborhood": "Back Bay", "category": "statue", "rarity": "uncommon" },
-    { "id": "seed_harvard_yard", "name": "Harvard Yard", "lat": 42.3744, "lng": -71.1169, "neighborhood": "Cambridge", "category": "park", "rarity": "uncommon" },
-    { "id": "seed_john_harvard_statue", "name": "John Harvard Statue", "lat": 42.3745, "lng": -71.1166, "neighborhood": "Cambridge", "category": "statue", "rarity": "rare" },
-    { "id": "seed_mit_great_dome", "name": "MIT Great Dome", "lat": 42.3601, "lng": -71.0920, "neighborhood": "Cambridge", "category": "building", "rarity": "rare" },
-    { "id": "seed_mit_stata_center", "name": "MIT Stata Center", "lat": 42.3617, "lng": -71.0902, "neighborhood": "Cambridge", "category": "oddity", "rarity": "epic" },
-    { "id": "seed_kendall_square", "name": "Kendall Square", "lat": 42.3625, "lng": -71.0862, "neighborhood": "Cambridge", "category": "shop", "rarity": "common" },
-    { "id": "seed_harvard_bridge", "name": "Harvard Bridge (Smoots)", "lat": 42.3543, "lng": -71.0920, "neighborhood": "Cambridge", "category": "oddity", "rarity": "rare" }
+    {
+      "id": "seed_boston_common",
+      "name": "Boston Common",
+      "lat": 42.3551,
+      "lng": -71.0657,
+      "neighborhood": "Downtown",
+      "category": "park",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_public_garden",
+      "name": "Boston Public Garden",
+      "lat": 42.3541,
+      "lng": -71.0699,
+      "neighborhood": "Back Bay",
+      "category": "park",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_make_way_ducklings",
+      "name": "Make Way for Ducklings",
+      "lat": 42.3561,
+      "lng": -71.0693,
+      "neighborhood": "Back Bay",
+      "category": "statue",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_swan_boats",
+      "name": "Swan Boats",
+      "lat": 42.3537,
+      "lng": -71.0703,
+      "neighborhood": "Back Bay",
+      "category": "water",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_shaw_memorial",
+      "name": "Robert Gould Shaw Memorial",
+      "lat": 42.3579,
+      "lng": -71.0636,
+      "neighborhood": "Beacon Hill",
+      "category": "statue",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_mass_state_house",
+      "name": "Massachusetts State House",
+      "lat": 42.3588,
+      "lng": -71.0638,
+      "neighborhood": "Beacon Hill",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_acorn_street",
+      "name": "Acorn Street",
+      "lat": 42.3579,
+      "lng": -71.0693,
+      "neighborhood": "Beacon Hill",
+      "category": "oddity",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_faneuil_hall",
+      "name": "Faneuil Hall",
+      "lat": 42.3601,
+      "lng": -71.0557,
+      "neighborhood": "Downtown",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_quincy_market",
+      "name": "Quincy Market",
+      "lat": 42.36,
+      "lng": -71.0545,
+      "neighborhood": "Downtown",
+      "category": "building",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_old_north_church",
+      "name": "Old North Church",
+      "lat": 42.3663,
+      "lng": -71.0544,
+      "neighborhood": "North End",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_paul_revere_statue",
+      "name": "Paul Revere Statue",
+      "lat": 42.3655,
+      "lng": -71.0542,
+      "neighborhood": "North End",
+      "category": "statue",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_mikes_pastry",
+      "name": "Mike's Pastry",
+      "lat": 42.3636,
+      "lng": -71.0548,
+      "neighborhood": "North End",
+      "category": "cafe",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_caffe_vittoria",
+      "name": "Caffè Vittoria",
+      "lat": 42.3639,
+      "lng": -71.0546,
+      "neighborhood": "North End",
+      "category": "cafe",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_td_garden",
+      "name": "TD Garden",
+      "lat": 42.3662,
+      "lng": -71.0621,
+      "neighborhood": "West End",
+      "category": "building",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_zakim_bridge",
+      "name": "Leonard P. Zakim Bunker Hill Bridge",
+      "lat": 42.369,
+      "lng": -71.0637,
+      "neighborhood": "Charlestown",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_bunker_hill_monument",
+      "name": "Bunker Hill Monument",
+      "lat": 42.3765,
+      "lng": -71.0608,
+      "neighborhood": "Charlestown",
+      "category": "statue",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_uss_constitution",
+      "name": "USS Constitution",
+      "lat": 42.3724,
+      "lng": -71.0564,
+      "neighborhood": "Charlestown",
+      "category": "water",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_rose_kennedy_greenway",
+      "name": "Rose Kennedy Greenway",
+      "lat": 42.3601,
+      "lng": -71.0519,
+      "neighborhood": "Downtown",
+      "category": "park",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_greenway_carousel",
+      "name": "Greenway Carousel",
+      "lat": 42.3609,
+      "lng": -71.0507,
+      "neighborhood": "Downtown",
+      "category": "oddity",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_boston_harborwalk",
+      "name": "Boston Harborwalk",
+      "lat": 42.3588,
+      "lng": -71.0493,
+      "neighborhood": "Waterfront",
+      "category": "water",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_ica_boston",
+      "name": "Institute of Contemporary Art",
+      "lat": 42.3531,
+      "lng": -71.0446,
+      "neighborhood": "Seaport",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_trinity_church",
+      "name": "Trinity Church",
+      "lat": 42.3548,
+      "lng": -71.0745,
+      "neighborhood": "Back Bay",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_boston_public_library",
+      "name": "Boston Public Library",
+      "lat": 42.3493,
+      "lng": -71.0779,
+      "neighborhood": "Back Bay",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_copley_square",
+      "name": "Copley Square",
+      "lat": 42.3499,
+      "lng": -71.0765,
+      "neighborhood": "Back Bay",
+      "category": "park",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_newbury_street",
+      "name": "Newbury Street",
+      "lat": 42.3503,
+      "lng": -71.081,
+      "neighborhood": "Back Bay",
+      "category": "shop",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_pru_skywalk",
+      "name": "Prudential Skywalk Observatory",
+      "lat": 42.3473,
+      "lng": -71.0821,
+      "neighborhood": "Back Bay",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_esplanade_hatch_shell",
+      "name": "Hatch Memorial Shell",
+      "lat": 42.357,
+      "lng": -71.0722,
+      "neighborhood": "Back Bay",
+      "category": "park",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_charles_esplanade",
+      "name": "Charles River Esplanade",
+      "lat": 42.3562,
+      "lng": -71.0738,
+      "neighborhood": "Back Bay",
+      "category": "nature",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_fenway_park",
+      "name": "Fenway Park",
+      "lat": 42.3467,
+      "lng": -71.0972,
+      "neighborhood": "Fenway",
+      "category": "building",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_citgo_sign",
+      "name": "Citgo Sign",
+      "lat": 42.3489,
+      "lng": -71.0954,
+      "neighborhood": "Fenway",
+      "category": "oddity",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_fenway_victory_gardens",
+      "name": "Fenway Victory Gardens",
+      "lat": 42.3432,
+      "lng": -71.0914,
+      "neighborhood": "Fenway",
+      "category": "nature",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_mfa_boston",
+      "name": "Museum of Fine Arts",
+      "lat": 42.3394,
+      "lng": -71.0942,
+      "neighborhood": "Fenway",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_isabella_gardner",
+      "name": "Isabella Stewart Gardner Museum",
+      "lat": 42.3381,
+      "lng": -71.0989,
+      "neighborhood": "Fenway",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_arnold_arboretum",
+      "name": "Arnold Arboretum",
+      "lat": 42.2986,
+      "lng": -71.1245,
+      "neighborhood": "Jamaica Plain",
+      "category": "nature",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_castle_island",
+      "name": "Castle Island",
+      "lat": 42.3376,
+      "lng": -71.0106,
+      "neighborhood": "South Boston",
+      "category": "park",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_sam_adams_statue",
+      "name": "Samuel Adams Statue",
+      "lat": 42.3599,
+      "lng": -71.0565,
+      "neighborhood": "Downtown",
+      "category": "statue",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_tortoise_hare_statues",
+      "name": "Tortoise and Hare Statues",
+      "lat": 42.3498,
+      "lng": -71.0772,
+      "neighborhood": "Back Bay",
+      "category": "statue",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_harvard_yard",
+      "name": "Harvard Yard",
+      "lat": 42.3744,
+      "lng": -71.1169,
+      "neighborhood": "Cambridge",
+      "category": "park",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_john_harvard_statue",
+      "name": "John Harvard Statue",
+      "lat": 42.3745,
+      "lng": -71.1166,
+      "neighborhood": "Cambridge",
+      "category": "statue",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_mit_great_dome",
+      "name": "MIT Great Dome",
+      "lat": 42.3601,
+      "lng": -71.092,
+      "neighborhood": "Cambridge",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_mit_stata_center",
+      "name": "MIT Stata Center",
+      "lat": 42.3617,
+      "lng": -71.0902,
+      "neighborhood": "Cambridge",
+      "category": "oddity",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_kendall_square",
+      "name": "Kendall Square",
+      "lat": 42.3625,
+      "lng": -71.0862,
+      "neighborhood": "Cambridge",
+      "category": "shop",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_harvard_bridge",
+      "name": "Harvard Bridge (Smoots)",
+      "lat": 42.3543,
+      "lng": -71.092,
+      "neighborhood": "Cambridge",
+      "category": "oddity",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_dewey_square_mural",
+      "name": "Greenway Mural at Dewey Square",
+      "lat": 42.3527,
+      "lng": -71.0553,
+      "neighborhood": "Downtown",
+      "category": "mural",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_graffiti_alley",
+      "name": "Graffiti Alley (Modica Way)",
+      "lat": 42.3633,
+      "lng": -71.1012,
+      "neighborhood": "Cambridge",
+      "category": "mural",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_underground_ink_block",
+      "name": "Underground at Ink Block",
+      "lat": 42.3433,
+      "lng": -71.0622,
+      "neighborhood": "South End",
+      "category": "mural",
+      "rarity": "uncommon"
+    }
   ]
 }

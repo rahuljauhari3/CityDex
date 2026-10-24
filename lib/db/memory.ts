@@ -1,29 +1,24 @@
 /**
- * In-memory demo store (design.md §4).
- *
- * Process-memory maps used when Supabase is not configured, so the full demo
- * flow works with no keys (REQ-1.6, REQ-1.7). Seeded data and the richer
- * queries land in later milestones; this M0 skeleton implements the `Store`
- * surface with empty/simple behavior so route handlers compile and the app
- * runs.
+ * In-memory demo store (design.md §4). Used when Supabase is not configured,
+ * so the whole app works with no keys. The DB lives on `globalThis` so it
+ * survives dev hot reloads, and is seeded once with Boston places plus the
+ * demo world (6 demo users with a week of history).
  */
 
 import { getSeedPlaces } from "@/data/seed/places";
+import { buildDemoWorld } from "@/lib/demo/seed";
+import type { AppleRecord } from "@/lib/health/apple";
 import type { Store } from "./store";
 import type {
-  Badge,
-  BoundingBox,
-  CreatePlaceInput,
-  CreateRouteInput,
-  CreateStampInput,
-  DexEntry,
-  FeedItem,
   Friendship,
   Goal,
-  LeaderboardRow,
+  HealthConnection,
+  Kudos,
   Place,
+  Profile,
   Route,
   Stamp,
+  UserBadge,
 } from "./types";
 
 function id(prefix: string): string {
@@ -36,63 +31,74 @@ function nowIso(): string {
 
 interface MemoryDb {
   places: Map<string, Place>;
+  profiles: Map<string, Profile>;
   stamps: Map<string, Stamp>;
   routes: Map<string, Route>;
-  goals: Map<string, Goal>;
+  goals: Map<string, Goal[]>;
   friendships: Friendship[];
-  kudos: Set<string>; // `${stampId}:${userId}`
-  badges: Map<string, Badge>;
-  userBadges: Set<string>; // `${userId}:${badgeSlug}`
+  kudos: Kudos[];
+  userBadges: UserBadge[];
+  connections: HealthConnection[];
+  appleRecords: Map<string, AppleRecord[]>;
 }
 
-/** Single shared instance for the process lifetime. */
-const db: MemoryDb = {
-  places: new Map(),
-  stamps: new Map(),
-  routes: new Map(),
-  goals: new Map(),
-  friendships: [],
-  kudos: new Set(),
-  badges: new Map(),
-  userBadges: new Set(),
-};
+const g = globalThis as unknown as { __citydexDb?: MemoryDb };
 
-/**
- * Seed the curated Boston/Cambridge places once per process (REQ-15.1). Idempotent:
- * safe to call on every store access; it only fills the map the first time.
- */
-let seeded = false;
-function ensureSeeded(): void {
-  if (seeded) return;
-  seeded = true;
-  for (const place of getSeedPlaces()) {
-    db.places.set(place.id, place);
+function createDb(): MemoryDb {
+  const db: MemoryDb = {
+    places: new Map(getSeedPlaces().map((p) => [p.id, p])),
+    profiles: new Map(),
+    stamps: new Map(),
+    routes: new Map(),
+    goals: new Map(),
+    friendships: [],
+    kudos: [],
+    userBadges: [],
+    connections: [],
+    appleRecords: new Map(),
+  };
+  const world = buildDemoWorld([...db.places.values()], new Date());
+  for (const p of world.profiles) db.profiles.set(p.id, p);
+  for (const s of world.stamps) {
+    db.stamps.set(s.id, s);
+    const place = db.places.get(s.placeId);
+    if (place) {
+      place.collectCount += 1;
+      if (!place.firstCollectedAt || s.createdAt < place.firstCollectedAt) place.firstCollectedAt = s.createdAt;
+    }
   }
+  for (const [userId, goals] of world.goals) db.goals.set(userId, goals);
+  db.friendships.push(...world.friendships);
+  db.kudos.push(...world.kudos);
+  db.userBadges.push(...world.userBadges);
+  db.connections.push(...world.connections);
+  return db;
 }
 
-function inBbox(place: Place, bbox: BoundingBox): boolean {
-  return (
-    place.lat >= bbox.minLat &&
-    place.lat <= bbox.maxLat &&
-    place.lng >= bbox.minLng &&
-    place.lng <= bbox.maxLng
-  );
+function getDb(): MemoryDb {
+  if (!g.__citydexDb) g.__citydexDb = createDb();
+  return g.__citydexDb;
+}
+
+/** Test helper: rebuild the demo world from scratch. */
+export function resetMemoryDb(): void {
+  g.__citydexDb = undefined;
 }
 
 export const memoryStore: Store = {
   async getPlaces(bbox) {
-    ensureSeeded();
-    const all = [...db.places.values()];
-    return bbox ? all.filter((p) => inBbox(p, bbox)) : all;
+    const all = [...getDb().places.values()];
+    if (!bbox) return all;
+    return all.filter(
+      (p) => p.lat >= bbox.minLat && p.lat <= bbox.maxLat && p.lng >= bbox.minLng && p.lng <= bbox.maxLng,
+    );
   },
 
   async getPlace(placeId) {
-    ensureSeeded();
-    return db.places.get(placeId) ?? null;
+    return getDb().places.get(placeId) ?? null;
   },
 
-  async createPlace(input: CreatePlaceInput) {
-    ensureSeeded();
+  async createPlace(input) {
     const place: Place = {
       id: id("place"),
       name: input.name,
@@ -106,23 +112,44 @@ export const memoryStore: Store = {
       collectCount: 0,
       baselineRarity: input.baselineRarity ?? "common",
     };
-    db.places.set(place.id, place);
+    getDb().places.set(place.id, place);
     return place;
   },
 
   async recordCollection(placeId) {
-    ensureSeeded();
-    const place = db.places.get(placeId);
+    const place = getDb().places.get(placeId);
     if (!place) return null;
     place.collectCount += 1;
-    if (!place.firstCollectedAt) {
-      place.firstCollectedAt = nowIso();
-    }
-    db.places.set(place.id, place);
+    if (!place.firstCollectedAt) place.firstCollectedAt = nowIso();
     return place;
   },
 
-  async createStamp(input: CreateStampInput) {
+  async getProfile(userId) {
+    return getDb().profiles.get(userId) ?? null;
+  },
+
+  async findProfile(q) {
+    const needle = q.trim().toLowerCase().replace(/^@/, "");
+    for (const p of getDb().profiles.values()) {
+      if (p.username.toLowerCase() === needle || p.inviteCode.toLowerCase() === needle) return p;
+    }
+    return null;
+  },
+
+  async listProfiles() {
+    return [...getDb().profiles.values()];
+  },
+
+  async updateProfile(userId, patch) {
+    const db = getDb();
+    const current = db.profiles.get(userId);
+    if (!current) throw new Error("Profile not found");
+    const next = { ...current, ...patch };
+    db.profiles.set(userId, next);
+    return next;
+  },
+
+  async createStamp(input) {
     const stamp: Stamp = {
       id: id("stamp"),
       userId: input.userId,
@@ -132,36 +159,29 @@ export const memoryStore: Store = {
       card: input.card,
       rarity: input.rarity,
       points: input.points,
+      pointsBreakdown: input.pointsBreakdown ?? null,
       healthSnapshot: input.healthSnapshot ?? null,
-      createdAt: nowIso(),
+      createdAt: input.createdAt ?? nowIso(),
     };
-    db.stamps.set(stamp.id, stamp);
+    getDb().stamps.set(stamp.id, stamp);
     return stamp;
   },
 
+  async getStamp(stampId) {
+    return getDb().stamps.get(stampId) ?? null;
+  },
+
   async getStampsByUser(userId) {
-    return [...db.stamps.values()].filter((s) => s.userId === userId);
+    return [...getDb().stamps.values()]
+      .filter((s) => s.userId === userId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   },
 
-  async getDexForUser(userId, nearbyPlaceIds) {
-    ensureSeeded();
-    const owned = new Map(
-      [...db.stamps.values()]
-        .filter((s) => s.userId === userId)
-        .map((s) => [s.placeId, s]),
-    );
-    const placeIds = nearbyPlaceIds ?? [...db.places.keys()];
-    const entries: DexEntry[] = [];
-    for (const placeId of placeIds) {
-      const place = db.places.get(placeId);
-      if (!place) continue;
-      const stamp = owned.get(placeId) ?? null;
-      entries.push({ placeId, locked: !stamp, stamp, place });
-    }
-    return entries;
+  async getAllStamps() {
+    return [...getDb().stamps.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   },
 
-  async createRoute(input: CreateRouteInput) {
+  async createRoute(input) {
     const route: Route = {
       id: id("route"),
       userId: input.userId,
@@ -172,82 +192,113 @@ export const memoryStore: Store = {
       estSteps: input.estSteps,
       shared: input.shared ?? false,
     };
-    db.routes.set(route.id, route);
+    getDb().routes.set(route.id, route);
     return route;
   },
 
+  async getRoute(routeId) {
+    return getDb().routes.get(routeId) ?? null;
+  },
+
   async getGoals(userId) {
-    return [...db.goals.values()].filter((g) => g.userId === userId);
+    return getDb().goals.get(userId) ?? [];
   },
 
-  async upsertGoal(goal) {
-    const resolved: Goal = { ...goal, id: goal.id ?? id("goal") };
-    db.goals.set(resolved.id, resolved);
-    return resolved;
+  async setGoals(userId, goals) {
+    const rows: Goal[] = goals.map((goal) => ({ ...goal, id: `goal_${userId}_${goal.type}`, userId }));
+    getDb().goals.set(userId, rows);
+    return rows;
   },
 
-  async getLeaderboard(): Promise<LeaderboardRow[]> {
-    // Aggregation lands in M4. Location is never included here.
-    return [];
-  },
-
-  async addFriend(userId, friendUsernameOrCode) {
-    const friendship: Friendship = {
-      userId,
-      friendId: friendUsernameOrCode,
-      status: "pending",
-      createdAt: nowIso(),
-    };
+  async addFriendship(userId, friendId, status) {
+    const db = getDb();
+    const existing = db.friendships.find(
+      (f) => (f.userId === userId && f.friendId === friendId) || (f.userId === friendId && f.friendId === userId),
+    );
+    if (existing) {
+      if (status === "accepted") existing.status = "accepted";
+      return existing;
+    }
+    const friendship: Friendship = { userId, friendId, status, createdAt: nowIso() };
     db.friendships.push(friendship);
     return friendship;
   },
 
-  async acceptFriend(userId, friendId) {
-    const friendship = db.friendships.find(
-      (f) => f.userId === userId && f.friendId === friendId,
-    );
-    if (!friendship) {
-      throw new Error("Friendship not found");
+  async listFriendships(userId) {
+    return getDb().friendships.filter((f) => f.userId === userId || f.friendId === userId);
+  },
+
+  async toggleKudos(stampId, userId) {
+    const db = getDb();
+    const i = db.kudos.findIndex((k) => k.stampId === stampId && k.userId === userId);
+    if (i >= 0) {
+      db.kudos.splice(i, 1);
+      return false;
     }
-    friendship.status = "accepted";
-    return friendship;
+    db.kudos.push({ stampId, userId, createdAt: nowIso() });
+    return true;
   },
 
-  async listFriends(userId) {
-    return db.friendships.filter(
-      (f) => f.userId === userId || f.friendId === userId,
-    );
+  async listKudos(stampIds) {
+    const set = new Set(stampIds);
+    return getDb().kudos.filter((k) => set.has(k.stampId));
   },
 
-  async getFeed(): Promise<FeedItem[]> {
-    // Feed assembly lands in M6.
-    return [];
+  async getUserBadges(userId) {
+    return getDb().userBadges.filter((b) => b.userId === userId);
   },
 
-  async addKudos(stampId, userId) {
-    db.kudos.add(`${stampId}:${userId}`);
+  async awardBadge(userId, badgeSlug, earnedAt) {
+    const db = getDb();
+    if (db.userBadges.some((b) => b.userId === userId && b.badgeId === badgeSlug)) return false;
+    db.userBadges.push({ userId, badgeId: badgeSlug, earnedAt: earnedAt ?? nowIso() });
+    return true;
   },
 
-  async listBadges() {
-    return [...db.badges.values()];
+  async getConnections(userId) {
+    return getDb().connections.filter((c) => c.userId === userId);
   },
 
-  async awardBadge(userId, badgeSlug) {
-    db.userBadges.add(`${userId}:${badgeSlug}`);
+  async saveConnection(conn) {
+    const db = getDb();
+    db.connections = db.connections.filter((c) => !(c.userId === conn.userId && c.provider === conn.provider));
+    db.connections.push(conn);
+  },
+
+  async deleteConnection(userId, provider) {
+    const db = getDb();
+    db.connections = db.connections.filter((c) => !(c.userId === userId && c.provider === provider));
+    if (provider === "apple_export") db.appleRecords.delete(userId);
+  },
+
+  async setAppleRecords(userId, records) {
+    getDb().appleRecords.set(userId, records);
+  },
+
+  async getAppleRecords(userId) {
+    return getDb().appleRecords.get(userId) ?? [];
   },
 
   async deleteAccount(userId) {
+    const db = getDb();
+    const stampIds = new Set<string>();
     for (const [key, stamp] of db.stamps) {
-      if (stamp.userId === userId) db.stamps.delete(key);
+      if (stamp.userId === userId) {
+        stampIds.add(key);
+        db.stamps.delete(key);
+      }
     }
-    for (const [key, route] of db.routes) {
-      if (route.userId === userId) db.routes.delete(key);
+    for (const [key, route] of db.routes) if (route.userId === userId) db.routes.delete(key);
+    db.goals.delete(userId);
+    db.friendships = db.friendships.filter((f) => f.userId !== userId && f.friendId !== userId);
+    db.kudos = db.kudos.filter((k) => k.userId !== userId && !stampIds.has(k.stampId));
+    db.userBadges = db.userBadges.filter((b) => b.userId !== userId);
+    db.connections = db.connections.filter((c) => c.userId !== userId);
+    db.appleRecords.delete(userId);
+    const profile = db.profiles.get(userId);
+    if (profile) {
+      // The demo identity is recreated fresh so the app keeps working.
+      db.profiles.set(userId, { ...profile, consentedAt: null, onboardedAt: null, age: null });
     }
-    for (const [key, goal] of db.goals) {
-      if (goal.userId === userId) db.goals.delete(key);
-    }
-    db.friendships = db.friendships.filter(
-      (f) => f.userId !== userId && f.friendId !== userId,
-    );
   },
 };

@@ -8,15 +8,14 @@
  */
 
 import { NextResponse } from "next/server";
-import { getStore } from "@/lib/db";
+import { getDex } from "@/lib/app/views";
 import { DEMO_USER_ID } from "@/lib/demo-user";
 
 export const runtime = "nodejs";
 
 export async function GET(): Promise<Response> {
   try {
-    const store = getStore();
-    const entries = await store.getDexForUser(DEMO_USER_ID);
+    const entries = await getDex(DEMO_USER_ID);
     return NextResponse.json({ entries });
   } catch {
     return NextResponse.json(

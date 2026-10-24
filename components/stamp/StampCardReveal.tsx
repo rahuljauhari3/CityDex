@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Stamp } from "@/lib/db/types";
 import { rarityHex, RARITY_LABEL_HEX } from "@/components/map/rarity";
+import { DemoChip, HealthStats, NotMedicalAdvice } from "@/components/health/HealthBits";
+import type { NewBadge } from "./CollectFlow";
 
 const CATEGORY_LABEL: Record<string, string> = {
   mural: "Mural",
@@ -41,8 +43,14 @@ export function StampCardReveal({
   stamp,
   place,
   onClose,
+  newBadges = [],
+  recommended = false,
+  repeatVisit = false,
 }: {
   stamp: Stamp;
+  newBadges?: NewBadge[];
+  recommended?: boolean;
+  repeatVisit?: boolean;
   place?: { name: string; neighborhood: string | null } | null;
   onClose: () => void;
 }) {
@@ -116,7 +124,7 @@ export function StampCardReveal({
         role="dialog"
         aria-modal="true"
         aria-label={`${card.name} — ${rarity} stamp`}
-        className="fixed inset-0 z-[1400] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto p-4"
       >
         <div
           className={`${reduced ? "" : "card-reveal rarity-glow"} relative w-full max-w-xs bg-parchment p-3`}
@@ -140,7 +148,7 @@ export function StampCardReveal({
 
           {/* Photo shown exactly as uploaded — no filter, no dither (REQ-4.5). */}
           <div
-            className="relative aspect-square w-full overflow-hidden border-4 border-wood-dark bg-wood-dark/10"
+            className="relative aspect-[4/3] w-full overflow-hidden border-4 border-wood-dark bg-wood-dark/10"
             style={{ borderColor: frameHex }}
           >
             {stamp.photoPath ? (
@@ -181,28 +189,50 @@ export function StampCardReveal({
             </span>
           </p>
 
-          {/* Stats row — orange numbers. B1 adds distance/steps/HR/kcal cells. */}
-          <dl className="mt-3 grid grid-cols-2 gap-2 border-t-4 border-wood-dark pt-3 text-sm">
-            <div>
-              <dt className="font-label text-xs uppercase tracking-wide text-wood-dark/70">
-                Earned
-              </dt>
-              <dd className="font-heading text-xl text-activity">
-                +{stamp.points} pts
-              </dd>
-            </div>
-            <div>
-              <dt className="font-label text-xs uppercase tracking-wide text-wood-dark/70">
-                Place
-              </dt>
-              <dd className="font-heading text-wood-dark">{placeName}</dd>
-            </div>
-          </dl>
+          {/* Health snapshot: what your body did to get here (the main point). */}
+          {stamp.healthSnapshot ? (
+            <section className="mt-3 border-t-4 border-wood-dark pt-2" aria-label="Health snapshot">
+              <p className="mb-1 flex items-center justify-between font-label text-[11px] uppercase tracking-wide text-wood-dark/80">
+                <span>Getting here{stamp.healthSnapshot.durationMin ? ` · ${stamp.healthSnapshot.durationMin} min` : ""}</span>
+                {stamp.healthSnapshot.isDemo && <DemoChip />}
+              </p>
+              <HealthStats snapshot={stamp.healthSnapshot} />
+            </section>
+          ) : (
+            <p className="mt-3 border-t-4 border-wood-dark pt-2 text-sm text-wood-dark/80">
+              No health data for this check-in. Connect a source on your Profile.
+            </p>
+          )}
 
-          {/* Health stats land in B1. */}
-          <p className="mt-2 font-label text-[11px] text-wood-dark/60">
-            Health stats attach on your next check-in.
-          </p>
+          {/* Points breakdown. */}
+          <section className="mt-3 border-t-4 border-wood-dark pt-2" aria-label="Points">
+            <p className="flex items-baseline justify-between">
+              <span className="font-label text-xs uppercase tracking-wide text-wood-dark/75">Earned</span>
+              <span className="font-heading text-2xl text-activity">+{stamp.points} pts</span>
+            </p>
+            {stamp.pointsBreakdown && (
+              <p className="text-xs text-wood-dark/80">
+                {repeatVisit ? "Repeat visit: bonuses only · " : `${stamp.rarity} ${stamp.pointsBreakdown.base}`}
+                {stamp.pointsBreakdown.discoverer > 0 && ` · first finder +${stamp.pointsBreakdown.discoverer}`}
+                {` · steps +${stamp.pointsBreakdown.movement} · effort +${stamp.pointsBreakdown.effort}`}
+                {recommended && " · quest ×1.5"}
+              </p>
+            )}
+            <p className="mt-0.5 text-xs text-wood-dark/70">{placeName}</p>
+          </section>
+
+          {newBadges.length > 0 && (
+            <section className="mt-3 border-4 border-rarity-legendary bg-wood-dark p-2 text-parchment" aria-label="Badges unlocked">
+              {newBadges.map((b) => (
+                <p key={b.slug} className="font-heading text-sm">
+                  <span aria-hidden="true">{b.icon}</span> Badge unlocked: {b.name}
+                  <span className="block font-body text-xs text-parchment/80">{b.description}</span>
+                </p>
+              ))}
+            </section>
+          )}
+
+          <NotMedicalAdvice className="mt-2" />
         </div>
       </div>
     </>
