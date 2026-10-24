@@ -6,6 +6,7 @@
  */
 
 import type { Place, Stamp } from "@/lib/db/types";
+import { zone2Plus } from "@/lib/health/zones";
 
 export interface PlaceInsight {
   placeId: string;
@@ -21,6 +22,8 @@ export interface PlaceInsight {
   paceMinPerKm: number | null;
   isDemo: boolean;
   text: string;
+  /** Every visit with heart-rate data, oldest first (for the sparkline). */
+  history: { date: string; hr: number; pace: number | null; comparable: boolean }[];
 }
 
 export interface Visit {
@@ -95,6 +98,12 @@ export function computePlaceInsight(stamps: Stamp[], place: Place): PlaceInsight
     paceMinPerKm: pace,
     isDemo: used.some((v) => v.isDemo),
     text,
+    history: visits.map((v) => ({
+      date: new Date(v.t).toISOString(),
+      hr: Math.round(v.hr),
+      pace: v.pace === null ? null : Math.round(v.pace * 10) / 10,
+      comparable: used.includes(v),
+    })),
   };
 }
 
@@ -109,4 +118,65 @@ export function computePlaceInsights(stamps: Stamp[], places: Map<string, Place>
     if (insight) out.push(insight);
   }
   return out.sort((a, b) => Math.abs(b.deltaBpm) - Math.abs(a.deltaBpm));
+}
+
+export interface PlaceEffect {
+  placeId: string;
+  placeName: string;
+  category: Place["category"];
+  visits: number;
+  avgHr: number;
+  avgZone2: number;
+  kcalPerKm: number | null;
+  walking: boolean;
+  isDemo: boolean;
+}
+
+export interface PlaceEffects {
+  places: PlaceEffect[];
+  bestCardio: PlaceEffect | null;
+  calmest: PlaceEffect | null;
+}
+
+const GREEN = new Set<Place["category"]>(["park", "nature", "water"]);
+const WALK_MIN_PER_KM = 9;
+
+/**
+ * What each place does to your body on the way there: average HR, cardio
+ * minutes per visit and calories per km. Picks your best cardio spot and your
+ * calmest walk (lowest HR at walking pace, green places first).
+ */
+export function computePlaceEffects(stamps: Stamp[], places: Map<string, Place>): PlaceEffects {
+  const byPlace = new Map<string, Stamp[]>();
+  for (const s of stamps) {
+    if (!s.healthSnapshot?.hrAvg) continue;
+    byPlace.set(s.placeId, [...(byPlace.get(s.placeId) ?? []), s]);
+  }
+  const effects: PlaceEffect[] = [];
+  for (const [placeId, list] of byPlace) {
+    const place = places.get(placeId);
+    if (!place) continue;
+    const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    const paces = list.map(paceOf).filter((p): p is number => p !== null);
+    const kcalKm = list
+      .filter((s) => s.healthSnapshot!.activeKcal && (s.healthSnapshot!.distanceM ?? 0) > 200)
+      .map((s) => s.healthSnapshot!.activeKcal! / (s.healthSnapshot!.distanceM! / 1000));
+    effects.push({
+      placeId,
+      placeName: place.name,
+      category: place.category,
+      visits: list.length,
+      avgHr: Math.round(mean(list.map((s) => s.healthSnapshot!.hrAvg!))),
+      avgZone2: Math.round(mean(list.map((s) => zone2Plus(s.healthSnapshot!.hrZoneMinutes)))),
+      kcalPerKm: kcalKm.length ? Math.round(mean(kcalKm)) : null,
+      walking: paces.length ? mean(paces) >= WALK_MIN_PER_KM : true,
+      isDemo: list.some((s) => s.healthSnapshot!.isDemo),
+    });
+  }
+  effects.sort((a, b) => b.visits - a.visits || b.avgZone2 - a.avgZone2);
+  const bestCardio = [...effects].sort((a, b) => b.avgZone2 - a.avgZone2)[0] ?? null;
+  const walks = effects.filter((e) => e.walking && e.placeId !== bestCardio?.placeId);
+  const greenWalks = walks.filter((e) => GREEN.has(e.category));
+  const calmest = [...(greenWalks.length ? greenWalks : walks)].sort((a, b) => a.avgHr - b.avgHr)[0] ?? null;
+  return { places: effects, bestCardio, calmest };
 }

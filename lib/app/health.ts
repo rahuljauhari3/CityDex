@@ -29,7 +29,8 @@ export async function dailyFor(userId: string, dates: string[]): Promise<MergedD
   if (has(conns, "demo")) {
     for (const date of dates) {
       if (date > today) continue;
-      rows.push(demoDaily(userId, date, date === today ? nyDayProgress(new Date()) : 1));
+      const daysAgo = Math.round((Date.parse(today) - Date.parse(date)) / 86_400_000);
+      rows.push(demoDaily(userId, date, date === today ? nyDayProgress(new Date()) : 1, daysAgo));
     }
   }
   if (has(conns, "apple_export")) {

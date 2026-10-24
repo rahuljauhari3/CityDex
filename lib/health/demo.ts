@@ -93,9 +93,18 @@ export function demoRouteSnapshot(input: DemoRouteInput): HealthSnapshot {
   };
 }
 
-/** Daily totals for one demo user and day. `progress` (0–1) scales today's partial day. */
-export function demoDaily(userId: string, date: string, progress = 1): DailyHealth {
+/** Demo users who train regularly: their resting HR drifts down over time. */
+const IMPROVING = new Set(["demo-user", "demo_maya", "demo_priya"]);
+
+/**
+ * Daily totals for one demo user and day. `progress` (0–1) scales today's
+ * partial day; `daysAgo` shapes slow trends (older days sit a little higher
+ * for users who are getting fitter).
+ */
+export function demoDaily(userId: string, date: string, progress = 1, daysAgo = 0): DailyHealth {
   const rand = seededRandom(`${userId}:${date}`);
+  const baseline = 57 + seededRandom(`${userId}:rhr`)() * 6;
+  const drift = IMPROVING.has(userId) ? 0.12 * daysAgo : 0;
   const active = rand() > 0.2;
   const steps = Math.round((active ? between(rand, 7000, 13500) : between(rand, 2500, 6000)) * progress);
   return {
@@ -105,7 +114,7 @@ export function demoDaily(userId: string, date: string, progress = 1): DailyHeal
     steps,
     activeKcal: Math.round(steps * between(rand, 0.038, 0.048)),
     zoneMinutes: Math.round((active ? between(rand, 18, 55) : between(rand, 0, 12)) * progress),
-    restingHr: Math.round(between(rand, 56, 66)),
+    restingHr: Math.round(baseline + drift + between(rand, -1.5, 1.5)),
     spo2Avg: Math.round(between(rand, 95.8, 98.6) * 10) / 10,
     sleepHours: Math.round(between(rand, 5.8, 8.3) * 10) / 10,
   };

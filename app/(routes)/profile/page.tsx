@@ -4,19 +4,13 @@ import { PixelPanel } from "@/components/ui/PixelPanel";
 import { NotMedicalAdvice } from "@/components/health/HealthBits";
 import { WeeklySummaryCard } from "@/components/health/WeeklySummaryCard";
 import { InsightsCard } from "@/components/health/InsightsCard";
+import { HealthStoryCard, RecoveryCard, TrendsCard } from "@/components/health/StoryCards";
 import { CdcBaselineCard } from "@/components/health/CdcBaselineCard";
 import { HealthSources } from "@/components/health/HealthSources";
 import { DeleteAccount } from "@/components/ui/DeleteAccount";
 import { DEMO_USER_ID } from "@/lib/demo-user";
 import { getStore } from "@/lib/db";
-import {
-  getBadges,
-  getCdcBaseline,
-  getConnectionsView,
-  getInsights,
-  getViewer,
-  getWeekly,
-} from "@/lib/app/views";
+import { getBadges, getCdcBaseline, getConnectionsView, getHealthStory, getViewer } from "@/lib/app/views";
 
 export const metadata: Metadata = { title: "Profile · CityDex" };
 export const dynamic = "force-dynamic";
@@ -31,15 +25,13 @@ const ERRORS: Record<string, string> = {
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ error?: string; connected?: string }> }) {
   const { error, connected } = await searchParams;
-  const [viewer, weekly, insights, badges, sources, goals] = await Promise.all([
+  const [viewer, health, badges, sources] = await Promise.all([
     getViewer(),
-    getWeekly(DEMO_USER_ID),
-    getInsights(DEMO_USER_ID),
+    getHealthStory(DEMO_USER_ID),
     getBadges(DEMO_USER_ID),
     getConnectionsView(DEMO_USER_ID),
-    getStore().getGoals(DEMO_USER_ID),
   ]);
-  const stepGoal = goals.find((g) => g.type === "steps")?.target ?? 8000;
+  const { story, trends, weekly, insights, effects, stepGoal } = health;
   const earned = badges.filter((b) => b.earnedAt);
   const totalPoints = (await getStore().getStampsByUser(DEMO_USER_ID)).reduce((s, x) => s + x.points, 0);
 
@@ -64,8 +56,11 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         </p>
       )}
 
+      <HealthStoryCard story={story} />
+      {trends.recovery && <RecoveryCard recovery={trends.recovery} />}
+      <TrendsCard trends={trends} />
+      <InsightsCard insights={insights} effects={effects} />
       <WeeklySummaryCard summary={weekly} stepGoal={stepGoal} />
-      <InsightsCard insights={insights} />
       <CdcBaselineCard data={getCdcBaseline()} weekCardioMinutes={weekly.totals.zoneMinutes} />
       <HealthSources sources={sources} />
 

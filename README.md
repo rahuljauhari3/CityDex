@@ -96,7 +96,10 @@ Before every commit, run in order and fix failures: `npm run lint` →
 | Health snapshot per check-in | card reveal, Feed, Dex | steps, avg/max HR, HR zones, active kcal, SpO₂, duration; every value labeled with its source (DEMO, Strava, Apple, est.) |
 | Goals + progress bars | onboarding, Map header, Quests | steps, active kcal, zone-2+ cardio minutes, new places/week, green & quiet places/week |
 | Today's Quests | Quests | explainable score (PLAN §8) with reasons like "3 friends burned avg 310 kcal getting here" |
-| Place insights over time | Profile | HR at the same pace (±10%) across visits, linear trend in bpm/week, sample size shown |
+| Health story | Profile (top) | 3–4 plain-language takeaways ranked "going well" first: resting HR change, place insight, cardio vs the 150 min guideline, step-goal days, sleep, best cardio spot, next-morning resting HR after active days |
+| Recovery estimate | Profile, Quests | transparent 0–100 score from resting HR vs 2-week baseline, sleep vs 7 h and yesterday's cardio load; every factor shown. On "easy" days, quests favor short walks to green, quiet places |
+| 4-week trends | Profile | resting HR, sleep, steps, cardio: this week vs last with 28-day sparklines and a bpm/week slope (today's partial steps excluded) |
+| Place insights over time | Profile | HR at the same pace (±10%) across visits, linear trend in bpm/week, per-visit sparkline (other-pace visits shown hollow), best cardio spot, calmest walk, per-place table |
 | Weekly health summary | Profile | steps per day vs goal, kcal, cardio minutes, resting HR, SpO₂, sleep |
 | County baseline | Profile | CDC PLACES Suffolk County (2025 release) next to your week and the 150 min/week guideline |
 | Health sources | Profile | Demo watch, Apple Health `export.xml` upload (streamed parser), Strava OAuth; WHOOP/Fitbit need keys; Garmin/Samsung "coming soon" with the reason |

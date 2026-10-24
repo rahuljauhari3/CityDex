@@ -21,7 +21,9 @@ import { config } from "@/lib/config";
 import { DEFAULT_BOSTON_CENTER, type LatLng } from "@/lib/geo";
 import { providerCatalog } from "@/lib/health/providers";
 import { goalProgress, stampsOnDates, weeklySummary } from "@/lib/health/summary";
-import { computePlaceInsights } from "@/lib/insights/place";
+import { computePlaceEffects, computePlaceInsights } from "@/lib/insights/place";
+import { computeTrends, recoveryEstimate } from "@/lib/health/trends";
+import { buildHealthStory } from "@/lib/health/story";
 import { buildLeaderboard, metricValues } from "@/lib/leaderboard";
 import { recommend } from "@/lib/recs/score";
 import { addDays, nyDate, nyWeekStart, weekDates } from "@/lib/time";
@@ -62,9 +64,36 @@ export async function getToday(userId: string) {
   return { day, progress: goalProgress(goals, day, weekStamps, prior), dayNumber, isDemo: day.isDemo };
 }
 
+/** 28 days of merged daily data ending today, oldest first. */
+async function last28(userId: string) {
+  const today = nyDate(new Date());
+  return dailyFor(userId, Array.from({ length: 28 }, (_, i) => addDays(today, i - 27)));
+}
+
+export async function getTrends(userId: string) {
+  return computeTrends(await last28(userId));
+}
+
+export async function getPlaceEffects(userId: string) {
+  return computePlaceEffects(await getStore().getStampsByUser(userId), await placeMap());
+}
+
+export async function getHealthStory(userId: string) {
+  const [trends, weekly, insights, effects, goals] = await Promise.all([
+    getTrends(userId),
+    getWeekly(userId),
+    getInsights(userId),
+    getPlaceEffects(userId),
+    getStore().getGoals(userId),
+  ]);
+  const stepGoal = goals.find((g) => g.type === "steps" && g.active)?.target ?? 8000;
+  return { trends, weekly, insights, effects, stepGoal, story: buildHealthStory({ trends, weekly, stepGoal, insights, effects }) };
+}
+
 export async function getQuests(userId: string, pos: LatLng | null, limit = 5) {
   const store = getStore();
   const today = await getToday(userId);
+  const recovery = recoveryEstimate(await dailyFor(userId, Array.from({ length: 15 }, (_, i) => addDays(nyDate(new Date()), i - 14))));
   const remaining: { steps?: number; activeKcal?: number; zoneMinutes?: number } = {};
   for (const p of today.progress) {
     if (p.goal.type === "steps") remaining.steps = p.remaining;
@@ -80,10 +109,11 @@ export async function getQuests(userId: string, pos: LatLng | null, limit = 5) {
       allStamps: await store.getAllStamps(),
       friendIds: await friendIdsOf(userId),
       remaining,
+      recovery: recovery?.level ?? null,
     },
     limit,
   );
-  return { quests, today, usedDefaultPosition: !pos };
+  return { quests, today, recovery, usedDefaultPosition: !pos };
 }
 
 export async function getWeekly(userId: string, weekOffset = 0) {

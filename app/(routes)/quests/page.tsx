@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Quests · CityDex" };
 export const dynamic = "force-dynamic";
 
 export default async function QuestsPage() {
-  const { quests, today, usedDefaultPosition } = await getQuests(DEMO_USER_ID, null, 5);
+  const { quests, today, recovery, usedDefaultPosition } = await getQuests(DEMO_USER_ID, null, 5);
 
   return (
     <div className="mx-auto max-w-screen-sm space-y-4 px-4 py-4">
@@ -19,6 +19,14 @@ export default async function QuestsPage() {
         <h1 className="font-heading text-3xl text-wood-dark">Today&apos;s Quests</h1>
         <p className="text-sm text-wood-dark/80">Places picked to help you hit today&apos;s health goals.</p>
       </header>
+
+      {recovery && (
+        <Link href="/profile" className="block border-4 border-wood-dark px-3 py-2 pixel-shadow" style={{ background: recovery.level === "easy" ? "#fde3d3" : recovery.level === "moderate" ? "#fdf0c9" : "#e4f2d4" }}>
+          <p className="font-label text-[11px] uppercase text-wood-dark/75">Recovery estimate {recovery.score}/100{recovery.isDemo ? " · DEMO" : ""}</p>
+          <p className="font-heading text-base text-wood-dark">{recovery.headline}</p>
+          {recovery.level === "easy" && <p className="text-sm text-wood-dark/80">Quests below favor short walks to green, quiet places today.</p>}
+        </Link>
+      )}
 
       <PixelPanel>
         <div className="mb-2 flex items-center justify-between">

@@ -232,7 +232,7 @@ export function buildDemoWorld(places: Place[], now: Date): DemoWorld {
     }
 
     const mine = stamps.filter((s) => s.userId === person.id);
-    const daily = Array.from({ length: 14 }, (_, k) => demoDaily(person.id, addDays(today, -k)));
+    const daily = Array.from({ length: 14 }, (_, k) => demoDaily(person.id, addDays(today, -k), 1, k));
     for (const slug of evaluateBadges({ stamps: mine, places: placeById, daily })) {
       userBadges.push({ userId: person.id, badgeId: slug, earnedAt: mine.at(-1)?.createdAt ?? now.toISOString() });
     }

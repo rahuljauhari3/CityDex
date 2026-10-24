@@ -35,7 +35,12 @@ export interface RecInput {
   allStamps: Stamp[];
   friendIds: Set<string>;
   remaining: RemainingGoals;
+  /** On low-recovery days, favor short walks to green, quiet places. */
+  recovery?: "ready" | "moderate" | "easy" | null;
 }
+
+const GREEN = new Set(["park", "nature", "water"]);
+const EASY_MAX_KM = 1.5;
 
 export interface Quest {
   place: Place;
@@ -102,16 +107,21 @@ export function recommend(input: RecInput, limit = 5): Quest[] {
     const friendSignal = Math.min(1, friendUsers.size / 3);
     const novel = !owned.has(place.id);
     const neverCollected = place.collectCount === 0 && (byPlace.get(place.id)?.length ?? 0) === 0;
-    const distancePenalty = 0.1 * km + Math.max(0, km - 3) / 3;
+    const easyDay = input.recovery === "easy";
+    const green = GREEN.has(place.category);
+    const distancePenalty = 0.1 * km + Math.max(0, km - 3) / 3 + (easyDay ? Math.max(0, km - EASY_MAX_KM) : 0);
+    const recoveryBonus = easyDay && green && km <= EASY_MAX_KM * 1.5 ? 1.5 : 0;
 
     const score =
       WEIGHTS.goal * goalFit +
       WEIGHTS.friend * friendSignal +
       WEIGHTS.novel * (novel ? 1 : 0) +
-      WEIGHTS.rarity * RARITY_VALUE[place.baselineRarity] -
+      WEIGHTS.rarity * RARITY_VALUE[place.baselineRarity] +
+      recoveryBonus -
       WEIGHTS.dist * distancePenalty;
 
     const reasons: string[] = [];
+    if (recoveryBonus > 0) reasons.push("Easy recovery walk: green, quiet and close");
     if (friendUsers.size > 0) {
       const kcals = friendStamps.map((s) => s.healthSnapshot!.activeKcal ?? 0).filter((x) => x > 0);
       const avg = kcals.length ? Math.round(kcals.reduce((a, b) => a + b, 0) / kcals.length) : null;
