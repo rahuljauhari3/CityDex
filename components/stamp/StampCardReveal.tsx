@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Stamp } from "@/lib/db/types";
 import { rarityHex, RARITY_LABEL_HEX } from "@/components/map/rarity";
-import { DemoChip, HealthStats, NotMedicalAdvice } from "@/components/health/HealthBits";
+import { NotMedicalAdvice } from "@/components/health/HealthBits";
+import { StampHealthCard, type CheckinHealthContext } from "./StampHealthCard";
 import type { NewBadge } from "./CollectFlow";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -46,8 +47,10 @@ export function StampCardReveal({
   newBadges = [],
   recommended = false,
   repeatVisit = false,
+  health = null,
 }: {
   stamp: Stamp;
+  health?: CheckinHealthContext | null;
   newBadges?: NewBadge[];
   recommended?: boolean;
   repeatVisit?: boolean;
@@ -191,13 +194,9 @@ export function StampCardReveal({
 
           {/* Health snapshot: what your body did to get here (the main point). */}
           {stamp.healthSnapshot ? (
-            <section className="mt-3 border-t-4 border-wood-dark pt-2" aria-label="Health snapshot">
-              <p className="mb-1 flex items-center justify-between font-label text-[11px] uppercase tracking-wide text-wood-dark/80">
-                <span>Getting here{stamp.healthSnapshot.durationMin ? ` · ${stamp.healthSnapshot.durationMin} min` : ""}</span>
-                {stamp.healthSnapshot.isDemo && <DemoChip />}
-              </p>
-              <HealthStats snapshot={stamp.healthSnapshot} />
-            </section>
+            <div className="mt-3 border-t-4 border-wood-dark pt-2">
+              <StampHealthCard snapshot={stamp.healthSnapshot} context={health} />
+            </div>
           ) : (
             <p className="mt-3 border-t-4 border-wood-dark pt-2 text-sm text-wood-dark/80">
               No health data for this check-in. Connect a source on your Profile.
@@ -214,7 +213,7 @@ export function StampCardReveal({
               <p className="text-xs text-wood-dark/80">
                 {repeatVisit ? "Repeat visit: bonuses only · " : `${stamp.rarity} ${stamp.pointsBreakdown.base}`}
                 {stamp.pointsBreakdown.discoverer > 0 && ` · first finder +${stamp.pointsBreakdown.discoverer}`}
-                {` · steps +${stamp.pointsBreakdown.movement} · effort +${stamp.pointsBreakdown.effort}`}
+                {` · health bonus +${stamp.pointsBreakdown.movement + stamp.pointsBreakdown.effort} (steps ${stamp.pointsBreakdown.movement}, cardio ${stamp.pointsBreakdown.effort})`}
                 {recommended && " · quest ×1.5"}
               </p>
             )}

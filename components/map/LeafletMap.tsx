@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { DEFAULT_BOSTON_CENTER } from "@/lib/geo";
 import type { Place } from "@/lib/db/types";
 import { RARITY_HEX, rarityHex } from "./rarity";
 import { useRouteTracker } from "./useRouteTracker";
+import { LiveWalkPanel } from "./LiveWalkPanel";
 import { PlaceSheet } from "./PlaceSheet";
 
 const BOSTON: [number, number] = [
@@ -136,8 +137,25 @@ export function LeafletMap({
 
   const uIcon = useMemo(() => userIcon(), []);
   const quests = useMemo(() => new Set(questIds), [questIds]);
-  const pos = useMemo(() => (userPos ? { lat: userPos[0], lng: userPos[1] } : null), [userPos]);
-  const tracker = useRouteTracker(pos, accuracyM);
+  const gpsPos = useMemo(() => (userPos ? { lat: userPos[0], lng: userPos[1] } : null), [userPos]);
+  const tracker = useRouteTracker(gpsPos, accuracyM);
+  // During a simulated demo walk, "you" are wherever the simulation is.
+  const pos = tracker.position ?? gpsPos;
+  const markerPos: [number, number] | null = pos ? [pos.lat, pos.lng] : null;
+
+  function startWalk() {
+    if (gpsPos || !demoMode) {
+      tracker.start();
+      return;
+    }
+    // No GPS in demo mode: simulate a walk to the open place or today's top quest.
+    const target = selected ?? places.find((p) => p.id === questIds[0]) ?? null;
+    if (target) {
+      tracker.simulate({ lat: target.lat, lng: target.lng }, target.name);
+      setSelected(null);
+      setGeoError(null);
+    }
+  }
   const focusPlace = useMemo(
     () => (focusPlaceId ? places.find((p) => p.id === focusPlaceId) ?? null : null),
     [focusPlaceId, places],
@@ -157,7 +175,10 @@ export function LeafletMap({
           maxZoom={19}
         />
         {focusPlace ? <FocusPlace place={focusPlace} /> : <Recenter pos={userPos} />}
-        {userPos && <Marker position={userPos} icon={uIcon} />}
+        {tracker.points.length > 1 && (
+          <Polyline positions={tracker.points.map((p) => [p.lat, p.lng] as [number, number])} pathOptions={{ color: "#fc5200", weight: 5, dashArray: tracker.simulated ? "6 6" : undefined }} />
+        )}
+        {markerPos && <Marker position={markerPos} icon={uIcon} />}
         {places.map((place) => (
           <Marker
             key={place.id}
@@ -171,17 +192,15 @@ export function LeafletMap({
 
       {/* Walk tracking + rarity legend (bottom-left, above the attribution). */}
       <div className="absolute bottom-6 left-2 z-[1000] flex flex-col items-start gap-2">
-        <button
-          type="button"
-          onClick={tracker.active ? tracker.stop : tracker.start}
-          className={`pixel-shadow border-4 border-wood-dark px-3 py-1.5 font-heading text-sm ${
-            tracker.active ? "bg-berry text-parchment" : "bg-activity text-parchment"
-          }`}
-        >
-          {tracker.active
-            ? `■ Walk · ${(tracker.distanceM / 1000).toFixed(2)} km`
-            : "▶ Start walk"}
-        </button>
+        {!tracker.active && (
+          <button
+            type="button"
+            onClick={startWalk}
+            className="pixel-shadow border-4 border-wood-dark bg-activity px-3 py-1.5 font-heading text-sm text-parchment"
+          >
+            {gpsPos || !demoMode ? "▶ Start walk" : "▶ Demo walk to quest"}
+          </button>
+        )}
         <div className="flex gap-1 border-2 border-wood-dark bg-parchment/95 px-1.5 py-1" aria-label="Rarity legend">
           {(Object.keys(RARITY_HEX) as (keyof typeof RARITY_HEX)[]).map((r) => (
             <span key={r} className="flex items-center gap-0.5 font-label text-[9px] uppercase text-wood-dark">
@@ -209,12 +228,21 @@ export function LeafletMap({
         </div>
       )}
 
+      <LiveWalkPanel
+        tracker={tracker}
+        onArrivedCollect={() => {
+          const t = tracker.target;
+          const place = t ? places.find((p) => p.lat === t.position.lat && p.lng === t.position.lng) : null;
+          if (place) setSelected(place);
+        }}
+      />
+
       <PlaceSheet
         place={selected}
-        userPos={userPos ? { lat: userPos[0], lng: userPos[1] } : null}
-        accuracyM={accuracyM}
+        userPos={pos}
+        accuracyM={tracker.simulated ? 5 : accuracyM}
         demoMode={demoMode}
-        route={tracker.active ? { startedAt: tracker.startedAt!, distanceM: tracker.distanceM } : null}
+        route={tracker.active ? { startedAt: tracker.startedAt!, distanceM: tracker.distanceM, elapsedMs: tracker.elapsedMs, simulated: tracker.simulated } : null}
         onRouteUsed={tracker.stop}
         onClose={() => setSelected(null)}
         onCollected={({ place: updatedPlace }) => {

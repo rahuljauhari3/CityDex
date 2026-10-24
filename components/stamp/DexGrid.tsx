@@ -9,7 +9,7 @@ import { rarityHex } from "@/components/map/rarity";
  * rarity-colored chunky border and the place/card name; locked entries render
  * as a dark silhouette slot with "???". List semantics + labels for a11y.
  */
-export function DexGrid({ entries }: { entries: DexEntry[] }) {
+export function DexGrid({ entries, onSelect }: { entries: (DexEntry & { visits?: number })[]; onSelect: (placeId: string) => void }) {
   return (
     <ul role="list" aria-label="Collection" className="grid grid-cols-4 gap-2">
       {entries.map((entry) => {
@@ -37,28 +37,36 @@ export function DexGrid({ entries }: { entries: DexEntry[] }) {
 
         return (
           <li key={entry.placeId}>
-            <div
-              className="pixel-shadow w-full overflow-hidden border-4 bg-parchment"
+            <button
+              type="button"
+              onClick={() => onSelect(entry.placeId)}
+              aria-label={`${name}, ${stamp.rarity}${entry.visits && entry.visits > 1 ? `, ${entry.visits} visits` : ""}. Show details`}
+              className="pixel-shadow relative block w-full overflow-hidden border-4 bg-parchment text-left"
               style={{ borderColor: frameHex }}
             >
+              {entry.visits && entry.visits > 1 ? (
+                <span className="absolute right-0.5 top-0.5 z-10 border-2 border-wood-dark bg-activity px-1 font-label text-[10px] text-parchment">
+                  ×{entry.visits}
+                </span>
+              ) : null}
               <div className="aspect-square w-full overflow-hidden bg-wood-dark/10">
                 {stamp.photoPath ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={stamp.photoPath}
                     alt={`${name} (${stamp.rarity})`}
-                    className="pixelated h-full w-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-heading text-2xl text-wood-dark/50">
-                    ?
+                    ★
                   </div>
                 )}
               </div>
               <p className="truncate px-1 py-1 text-center font-label text-[11px] text-wood-dark">
                 {name}
               </p>
-            </div>
+            </button>
           </li>
         );
       })}

@@ -39,7 +39,7 @@ export function PlaceSheet({
   userPos: { lat: number; lng: number } | null;
   accuracyM: number | null;
   demoMode: boolean;
-  route: { startedAt: string; distanceM: number } | null;
+  route: { startedAt: string; distanceM: number; elapsedMs: number; simulated?: boolean } | null;
   onRouteUsed: () => void;
   onClose: () => void;
   onCollected: (result: { stamp: Stamp; place: Place }) => void;

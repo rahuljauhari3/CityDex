@@ -6,6 +6,7 @@ import type { Place, PlaceCategory, Stamp } from "@/lib/db/types";
 import { haversineMeters, isWithinGeofence } from "@/lib/geo";
 import { preparePhoto } from "@/lib/photo";
 import { StampCardReveal } from "./StampCardReveal";
+import type { CheckinHealthContext } from "./StampHealthCard";
 
 const GEOFENCE_M = 75;
 const MAX_ACCURACY_M = 50;
@@ -38,7 +39,7 @@ interface CollectFlowProps {
   /** Demo mode enables the "teleport to place" collect option (REQ-1.3). */
   demoMode: boolean;
   /** Active browser-tracked walk, if any (start time + distance). */
-  route?: { startedAt: string; distanceM: number } | null;
+  route?: { startedAt: string; distanceM: number; elapsedMs: number; simulated?: boolean } | null;
   /** Ends the tracked walk once a check-in used it. */
   onRouteUsed?: () => void;
   /** Called after a successful collect so the map/Dex can refresh. */
@@ -82,11 +83,12 @@ export function CollectFlow({
   const [message, setMessage] = useState<string | null>(null);
   const [stamp, setStamp] = useState<Stamp | null>(null);
   const [collectedPlace, setCollectedPlace] = useState<Place | null>(null);
-  const [extras, setExtras] = useState<{ newBadges: NewBadge[]; recommended: boolean; repeatVisit: boolean }>({
-    newBadges: [],
-    recommended: false,
-    repeatVisit: false,
-  });
+  const [extras, setExtras] = useState<{
+    newBadges: NewBadge[];
+    recommended: boolean;
+    repeatVisit: boolean;
+    health: CheckinHealthContext | null;
+  }>({ newBadges: [], recommended: false, repeatVisit: false, health: null });
   const [teleport, setTeleport] = useState(false);
   const [noPeople, setNoPeople] = useState(false);
 
@@ -170,6 +172,7 @@ export function CollectFlow({
       if (route) {
         form.append("routeStartedAt", route.startedAt);
         form.append("routeDistanceM", String(Math.round(route.distanceM)));
+        if (route.simulated) form.append("simulatedWalk", "true");
       }
 
       setPhase("uploading");
@@ -188,6 +191,7 @@ export function CollectFlow({
         newBadges: (data.newBadges ?? []) as NewBadge[],
         recommended: Boolean(data.recommended),
         repeatVisit: Boolean(data.repeatVisit),
+        health: (data.health ?? null) as CheckinHealthContext | null,
       });
       setPhase("revealed");
       if (route) onRouteUsed?.();
@@ -248,6 +252,14 @@ export function CollectFlow({
             </select>
           </label>
         </div>
+      )}
+
+      {route && (
+        <p className="mb-2 border-2 border-wood-dark bg-parchment px-2 py-1 text-sm text-wood-dark">
+          <span aria-hidden="true">🥾</span> {route.simulated ? "Demo walk" : "Your walk"}:{" "}
+          <strong>{(route.distanceM / 1000).toFixed(2)} km</strong> · {Math.max(1, Math.round(route.elapsedMs / 60_000))} min. Its health
+          data is attached to this stamp.
+        </p>
       )}
 
       {/* GPS accuracy warning (REQ-3.2). */}
@@ -334,6 +346,7 @@ export function CollectFlow({
           newBadges={extras.newBadges}
           recommended={extras.recommended}
           repeatVisit={extras.repeatVisit}
+          health={extras.health}
           place={
             collectedPlace
               ? { name: collectedPlace.name, neighborhood: collectedPlace.neighborhood }

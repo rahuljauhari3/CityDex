@@ -93,7 +93,9 @@ Before every commit, run in order and fix failures: `npm run lint` →
 
 | Feature | Where | Notes |
 |---|---|---|
-| Health snapshot per check-in | card reveal, Feed, Dex | steps, avg/max HR, HR zones, active kcal, SpO₂, duration; every value labeled with its source (DEMO, Strava, Apple, est.) |
+| Live walk tracking | Map | time, distance, est. steps, pace, est. kcal and live HR (demo watch) while you walk; path drawn on the map and kept on the device. In demo mode without GPS, "Demo walk to quest" simulates the walk at ×12 (labeled DEMO; the server refuses simulated walks outside demo mode) |
+| Health snapshot per check-in | card reveal, Feed, Dex | steps, avg/max HR, HR zones, active kcal, SpO₂, duration, pace; every value labeled with its source (DEMO, Strava, Apple, est.). The reveal also shows what the walk added to each daily goal and how it compares with your usual walk or earlier visits here |
+| Dex stamp details | Dex | tap a stamp: photo, totals for the place, the HR-trend insight, the latest snapshot and every visit |
 | Goals + progress bars | onboarding, Map header, Quests | steps, active kcal, zone-2+ cardio minutes, new places/week, green & quiet places/week |
 | Today's Quests | Quests | explainable score (PLAN §8) with reasons like "3 friends burned avg 310 kcal getting here" |
 | Health story | Profile (top) | 3–4 plain-language takeaways ranked "going well" first: resting HR change, place insight, cardio vs the 150 min guideline, step-goal days, sleep, best cardio spot, next-morning resting HR after active days |

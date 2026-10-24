@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DexEntry } from "@/lib/db/types";
 import { PixelPanel } from "@/components/ui/PixelPanel";
 import { DexGrid } from "./DexGrid";
+import { StampDetailSheet } from "./StampDetailSheet";
 
 /** How many locked (undiscovered) slots to surface alongside owned stamps. */
 const LOCKED_SHOWN = 16;
@@ -16,6 +17,7 @@ const LOCKED_SHOWN = 16;
 export function DexScreen() {
   const [entries, setEntries] = useState<DexEntry[] | null>(null);
   const [error, setError] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +76,13 @@ export function DexScreen() {
         </PixelPanel>
       )}
 
-      {!error && shown.length > 0 && <DexGrid entries={shown} />}
+      {!error && shown.length > 0 && (
+        <>
+          <p className="mb-2 text-xs text-wood-dark/75">Tap a stamp to see what each visit did for your body.</p>
+          <DexGrid entries={shown} onSelect={setSelected} />
+        </>
+      )}
+      {selected && <StampDetailSheet placeId={selected} onClose={() => setSelected(null)} />}
     </section>
   );
 }

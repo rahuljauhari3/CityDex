@@ -31,12 +31,15 @@ import {
   type LatLng,
 } from "@/lib/geo";
 import { DEMO_USER_ID } from "@/lib/demo-user";
+import { isDemoMode } from "@/lib/config";
 import type { Place, PlaceCategory } from "@/lib/db/types";
 import { computePoints } from "@/lib/points/compute";
 import { BADGES, evaluateBadges } from "@/lib/badges/rules";
 import { zone2Plus } from "@/lib/health/zones";
 import { checkinSnapshot, dailyFor } from "@/lib/app/health";
-import { getQuests } from "@/lib/app/views";
+import { getQuests, getToday } from "@/lib/app/views";
+import { compareToUsual, goalImpact, paceMinPerKm } from "@/lib/health/checkin";
+import { computePlaceInsight } from "@/lib/insights/place";
 import { addDays, nyDate } from "@/lib/time";
 
 export const runtime = "nodejs";
@@ -67,6 +70,7 @@ const CheckInSchema = z
     category: z.enum(STAMP_CATEGORIES).optional(),
     noPeople: boolFlag,
     teleport: boolFlag,
+    simulatedWalk: boolFlag,
   })
   .refine((v) => Boolean(v.placeId) || Boolean(v.name && v.category), {
     message: "Provide placeId, or a name and category for a new place.",
@@ -117,9 +121,14 @@ export async function POST(request: Request): Promise<Response> {
     category: field(form, "category"),
     noPeople: field(form, "noPeople"),
     teleport: field(form, "teleport"),
+    simulatedWalk: field(form, "simulatedWalk"),
   });
   if (!parsed.success) return bail(400, "Invalid check-in parameters.");
   const input = parsed.data;
+  // Demo-only shortcuts are refused outside demo mode.
+  if ((input.teleport || input.simulatedWalk) && !isDemoMode) {
+    return bail(403, "Teleport and simulated walks are only available in demo mode.");
+  }
 
   // Privacy guard: without the "no people" confirmation we store nothing.
   if (!input.noPeople) {
@@ -245,6 +254,11 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // Health context for the reveal: goal impact and how this compares.
+  const todayView = await getToday(DEMO_USER_ID);
+  const insight = repeatVisit ? computePlaceInsight([...myStamps, stamp], updatedPlace ?? place) : null;
+  const pace = paceMinPerKm(healthSnapshot);
+
   return NextResponse.json({
     accepted: true,
     stamp,
@@ -252,5 +266,11 @@ export async function POST(request: Request): Promise<Response> {
     recommended,
     repeatVisit,
     newBadges,
+    health: {
+      paceMinPerKm: pace === null ? null : Math.round(pace * 10) / 10,
+      goalImpact: goalImpact(healthSnapshot, todayView.progress),
+      usual: compareToUsual(healthSnapshot, myStamps),
+      placeInsight: insight ? { text: insight.text, history: insight.history, visits: insight.visits } : null,
+    },
   });
 }

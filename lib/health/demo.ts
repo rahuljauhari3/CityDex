@@ -119,3 +119,17 @@ export function demoDaily(userId: string, date: string, progress = 1, daysAgo = 
     sleepHours: Math.round(between(rand, 5.8, 8.3) * 10) / 10,
   };
 }
+
+/**
+ * A live demo heart-rate reading for a walk in progress. Warms up over the
+ * first few minutes, follows pace, and wobbles a little. Always labeled DEMO.
+ */
+export function demoLiveHr(seed: string, elapsedMin: number, paceMinPerKm: number | null, maxHr = estimatedMaxHr()): number {
+  const rand = seededRandom(`${seed}:${Math.floor(elapsedMin * 4)}`);
+  const running = paceMinPerKm !== null && paceMinPerKm < 8;
+  const target = running ? 0.78 * maxHr : 0.64 * maxHr;
+  const rest = 0.4 * maxHr;
+  const warm = Math.min(1, elapsedMin / 4);
+  const wobble = Math.sin(elapsedMin * 1.7) * 3 + (rand() - 0.5) * 4;
+  return Math.round(rest + (target - rest) * warm + wobble);
+}
