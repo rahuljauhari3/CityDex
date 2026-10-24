@@ -13,23 +13,23 @@ key; build those features behind the demo fallback and continue.
 
 ## M0 — Scaffold
 
-- [ ] 1. Initialize Next.js (App Router) + TypeScript project with ESLint and the
+- [x] 1. Initialize Next.js (App Router) + TypeScript project with ESLint and the
   App Router directory layout from `design.md` §1. _(REQ-1.1, REQ-1.5)_
-- [ ] 2. Add Tailwind and define the pixel theme tokens (palette, rarity colors,
+- [x] 2. Add Tailwind and define the pixel theme tokens (palette, rarity colors,
   activity orange) and Google Fonts (Pixelify Sans, VT323/Silkscreen, system
   body) in config and `globals.css`. _(REQ-1.1)_
-- [ ] 3. Add the PWA manifest and placeholder icons; wire installability. _(REQ-1.2)_
-- [ ] 4. Create `.env.example` with every variable from `tech.md`; confirm
+- [x] 3. Add the PWA manifest and placeholder icons; wire installability. _(REQ-1.2)_
+- [x] 4. Create `.env.example` with every variable from `tech.md`; confirm
   `.gitignore` excludes `.env.local`. _(REQ-1.4)_
-- [ ] 5. Add `lib/config.ts` resolving `isDemoMode`, `hasSupabase`,
+- [x] 5. Add `lib/config.ts` resolving `isDemoMode`, `hasSupabase`,
   `hasAnthropic`, `hasStrava/Whoop/Fitbit`. _(REQ-1.3, REQ-1.7)_
-- [ ] 6. Add the `Store` interface and `lib/db/memory.ts` + `lib/db/supabase.ts`
+- [x] 6. Add the `Store` interface and `lib/db/memory.ts` + `lib/db/supabase.ts`
   skeletons with `getStore()` selecting by `hasSupabase`. _(REQ-1.6)_
-- [ ] 7. Add bottom tab bar (Map · Quests · Dex · Feed · Profile) and empty route
+- [x] 7. Add bottom tab bar (Map · Quests · Dex · Feed · Profile) and empty route
   pages so the app runs; verify at 375×812 with a clean console. _(REQ-1.3, REQ-2.6)_
-- [ ] 8. Set up vitest and a trivial passing test; create `README.md` with
+- [x] 8. Set up vitest and a trivial passing test; create `README.md` with
   setup + demo-mode run steps. _(REQ-15.4)_
-- [ ] 9. Run lint, typecheck, test; commit `M0: scaffold Next.js app with pixel
+- [x] 9. Run lint, typecheck, test; commit `M0: scaffold Next.js app with pixel
   Tailwind theme and demo fallback`.
 
 ## M1 — Map + places

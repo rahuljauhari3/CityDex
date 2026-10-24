@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/*
+ * CityDex pixel theme (PLAN.md §9, ui.md).
+ * Tailwind v4 theme tokens — exposed as `bg-parchment`, `text-wood-dark`,
+ * `border-rarity-legendary`, `font-heading`, etc.
+ */
+
+@theme {
+  /* Core palette */
+  --color-parchment: #f4e4c1;
+  --color-wood-dark: #5b3a29;
+  --color-wood-light: #a0703c;
+  --color-grass: #6daa2c;
+  --color-sky: #7ec8e3;
+  --color-berry: #c0392b;
+
+  /* Activity accent (Strava-like energy) */
+  --color-activity: #fc5200;
+
+  /* Rarity colors */
+  --color-rarity-common: #9e9e9e;
+  --color-rarity-uncommon: #4caf50;
+  --color-rarity-rare: #2196f3;
+  --color-rarity-epic: #9c27b0;
+  --color-rarity-legendary: #ffc107;
+
+  /* Fonts (loaded via next/font in layout.tsx) */
+  --font-heading: var(--font-pixelify-sans), "Courier New", monospace;
+  --font-label: var(--font-silkscreen), "Courier New", monospace;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+
+  /* Semantic background/foreground used by body */
+  --color-background: var(--color-parchment);
+  --color-foreground: var(--color-wood-dark);
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  /* Minimum 16px body text for accessibility (ui.md). */
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Pixel sprites should not blur when scaled. */
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* Chunky stepped pixel shadow for wooden-panel cards. */
+.pixel-shadow {
+  box-shadow: 4px 4px 0 0 var(--color-wood-dark);
+}
+
+/* Respect reduced-motion: disable glow/flip animations (ui.md). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
