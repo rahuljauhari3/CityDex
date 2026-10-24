@@ -16,10 +16,11 @@ describe("seed places", () => {
       expect(ids.has(p.id)).toBe(false); // unique ids
       ids.add(p.id);
       expect(p.source).toBe("seed");
-      expect(p.lat).toBeGreaterThan(42.2);
-      expect(p.lat).toBeLessThan(42.5);
-      expect(p.lng).toBeGreaterThan(-71.2);
-      expect(p.lng).toBeLessThan(-70.9);
+      // Anywhere in Massachusetts.
+      expect(p.lat).toBeGreaterThan(41.2);
+      expect(p.lat).toBeLessThan(42.9);
+      expect(p.lng).toBeGreaterThan(-73.6);
+      expect(p.lng).toBeLessThan(-69.9);
       expect([
         "common",
         "uncommon",
@@ -36,5 +37,31 @@ describe("seed places", () => {
     expect(attribution).toMatch(/ODbL/i);
     expect(SEED_ATTRIBUTION).toMatch(/OpenStreetMap/i);
     expect(SEED_ATTRIBUTION).toMatch(/ODbL/i);
+  });
+});
+
+import { demoIllustration, demoPhotoFor } from "@/lib/demo/photos";
+import { buildDemoWorld } from "@/lib/demo/seed";
+
+describe("demo photos", () => {
+  it("uses the real Gasson Hall photo and original illustrations elsewhere", () => {
+    expect(demoPhotoFor({ id: "seed_bc_gasson_hall", name: "Gasson Hall", category: "building" })).toBe("/demo/gasson-hall.jpg");
+    const svg = demoIllustration({ id: "seed_walden_pond", name: "Walden Pond", category: "water" });
+    expect(svg.startsWith("data:image/svg+xml;utf8,")).toBe(true);
+    expect(decodeURIComponent(svg)).toContain("Walden Pond");
+    expect(svg).toBe(demoIllustration({ id: "seed_walden_pond", name: "Walden Pond", category: "water" }));
+  });
+
+  it("gives every seeded stamp a photo, and you a Gasson Hall stamp", () => {
+    const world = buildDemoWorld(getSeedPlaces(), new Date("2026-10-24T18:00:00Z"));
+    expect(world.stamps.every((s) => s.photoPath)).toBe(true);
+    expect(world.stamps.some((s) => s.userId === "demo-user" && s.placeId === "seed_bc_gasson_hall")).toBe(true);
+  });
+
+  it("includes Boston College and statewide Massachusetts stops", () => {
+    const ids = new Set(getSeedPlaces().map((p) => p.id));
+    for (const id of ["seed_bc_gasson_hall", "seed_heartbreak_hill", "seed_walden_pond", "seed_mount_greylock", "seed_plymouth_rock"]) {
+      expect(ids.has(id)).toBe(true);
+    }
   });
 });

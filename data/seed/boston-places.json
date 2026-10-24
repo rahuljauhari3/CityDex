@@ -1,6 +1,6 @@
 {
   "_attribution": "Place names and coordinates are derived from OpenStreetMap and are © OpenStreetMap contributors, available under the Open Database License (ODbL). See https://www.openstreetmap.org/copyright. Rarity values are CityDex gameplay assignments, not OSM data.",
-  "_note": "Curated set of real Boston/Cambridge points of interest. Coordinates are approximate (~within a building footprint). Do not call Overpass at runtime; this file is the source for the demo store.",
+  "_note": "Curated set of real Boston-area and Massachusetts points of interest. Coordinates are approximate (~within a building footprint or trailhead). Do not call Overpass at runtime; this file is the source for the demo store.",
   "places": [
     {
       "id": "seed_boston_common",
@@ -414,6 +414,186 @@
       "lng": -71.0622,
       "neighborhood": "South End",
       "category": "mural",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_bc_gasson_hall",
+      "name": "Gasson Hall, Boston College",
+      "lat": 42.3355,
+      "lng": -71.1695,
+      "neighborhood": "Chestnut Hill",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_bc_bapst_library",
+      "name": "Bapst Library",
+      "lat": 42.336,
+      "lng": -71.169,
+      "neighborhood": "Chestnut Hill",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_bc_st_ignatius",
+      "name": "St. Ignatius Church",
+      "lat": 42.3383,
+      "lng": -71.1703,
+      "neighborhood": "Chestnut Hill",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_bc_alumni_stadium",
+      "name": "Alumni Stadium",
+      "lat": 42.3351,
+      "lng": -71.1663,
+      "neighborhood": "Chestnut Hill",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_bc_middle_campus_quad",
+      "name": "BC Middle Campus Quad",
+      "lat": 42.3349,
+      "lng": -71.169,
+      "neighborhood": "Chestnut Hill",
+      "category": "park",
+      "rarity": "common"
+    },
+    {
+      "id": "seed_chestnut_hill_reservoir",
+      "name": "Chestnut Hill Reservoir Loop",
+      "lat": 42.3383,
+      "lng": -71.1567,
+      "neighborhood": "Brighton",
+      "category": "water",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_heartbreak_hill",
+      "name": "Heartbreak Hill (Boston Marathon)",
+      "lat": 42.3402,
+      "lng": -71.1604,
+      "neighborhood": "Newton",
+      "category": "oddity",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_marathon_finish_line",
+      "name": "Boston Marathon Finish Line",
+      "lat": 42.35,
+      "lng": -71.0782,
+      "neighborhood": "Back Bay",
+      "category": "oddity",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_walden_pond",
+      "name": "Walden Pond",
+      "lat": 42.4397,
+      "lng": -71.3373,
+      "neighborhood": "Concord",
+      "category": "water",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_old_north_bridge",
+      "name": "Old North Bridge",
+      "lat": 42.4686,
+      "lng": -71.3505,
+      "neighborhood": "Concord",
+      "category": "statue",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_great_blue_hill",
+      "name": "Great Blue Hill Summit",
+      "lat": 42.2121,
+      "lng": -71.1145,
+      "neighborhood": "Milton",
+      "category": "nature",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_salem_witch_house",
+      "name": "The Witch House",
+      "lat": 42.5214,
+      "lng": -70.8983,
+      "neighborhood": "Salem",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_gloucester_fisherman",
+      "name": "Gloucester Fisherman's Memorial",
+      "lat": 42.6094,
+      "lng": -70.6721,
+      "neighborhood": "Gloucester",
+      "category": "statue",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_lowell_boott_mills",
+      "name": "Boott Cotton Mills",
+      "lat": 42.6466,
+      "lng": -71.3079,
+      "neighborhood": "Lowell",
+      "category": "building",
+      "rarity": "uncommon"
+    },
+    {
+      "id": "seed_plymouth_rock",
+      "name": "Plymouth Rock",
+      "lat": 41.9581,
+      "lng": -70.662,
+      "neighborhood": "Plymouth",
+      "category": "oddity",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_race_point_beach",
+      "name": "Race Point Beach",
+      "lat": 42.0752,
+      "lng": -70.2381,
+      "neighborhood": "Provincetown",
+      "category": "water",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_mass_moca",
+      "name": "MASS MoCA",
+      "lat": 42.7016,
+      "lng": -73.1155,
+      "neighborhood": "North Adams",
+      "category": "mural",
+      "rarity": "epic"
+    },
+    {
+      "id": "seed_mount_greylock",
+      "name": "Mount Greylock Summit",
+      "lat": 42.6376,
+      "lng": -73.1662,
+      "neighborhood": "Adams",
+      "category": "nature",
+      "rarity": "legendary"
+    },
+    {
+      "id": "seed_basketball_hall_of_fame",
+      "name": "Basketball Hall of Fame",
+      "lat": 42.0937,
+      "lng": -72.588,
+      "neighborhood": "Springfield",
+      "category": "building",
+      "rarity": "rare"
+    },
+    {
+      "id": "seed_worcester_elm_park",
+      "name": "Elm Park",
+      "lat": 42.2734,
+      "lng": -71.8173,
+      "neighborhood": "Worcester",
+      "category": "park",
       "rarity": "uncommon"
     }
   ]

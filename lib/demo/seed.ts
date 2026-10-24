@@ -24,6 +24,7 @@ import { computePoints } from "@/lib/points/compute";
 import { buildStampCard } from "@/lib/stamp/build";
 import { addDays, nyDate } from "@/lib/time";
 import { milestoneId } from "@/lib/social/milestones";
+import { demoPhotoFor } from "./photos";
 
 interface DemoPerson {
   id: string;
@@ -49,6 +50,8 @@ const PEOPLE: DemoPerson[] = [
       { place: "seed_boston_common", daysAgo: 6, hour: 12, km: 1.1 },
       { place: "seed_charles_esplanade", daysAgo: 5, hour: 7, km: 3.2, run: true, hrOffset: 1 },
       { place: "seed_underground_ink_block", daysAgo: 3, hour: 17, km: 1.8 },
+      // Fall walk across Boston College's campus to Gasson Hall.
+      { place: "seed_bc_gasson_hall", daysAgo: 2, hour: 13, km: 2.1 },
       { place: "seed_charles_esplanade", daysAgo: 1, hour: 7, km: 3.2, run: true, hrOffset: 0 },
     ],
   },
@@ -71,6 +74,8 @@ const PEOPLE: DemoPerson[] = [
       { place: "seed_boston_harborwalk", daysAgo: 4, hour: 18, km: 2.2 },
       { place: "seed_ica_boston", daysAgo: 2, hour: 13, km: 1.9 },
       { place: "seed_underground_ink_block", daysAgo: 1, hour: 19, km: 1.3 },
+      { place: "seed_chestnut_hill_reservoir", daysAgo: 3, hour: 8, km: 2.6, run: true },
+      { place: "seed_bc_bapst_library", daysAgo: 3, hour: 9, km: 0.8 },
     ],
   },
   {
@@ -83,6 +88,7 @@ const PEOPLE: DemoPerson[] = [
       { place: "seed_charles_esplanade", daysAgo: 2, hour: 7, km: 4.8, run: true },
       { place: "seed_arnold_arboretum", daysAgo: 1, hour: 9, km: 2.6 },
       { place: "seed_john_harvard_statue", daysAgo: 0, hour: 8, km: 1.0 },
+      { place: "seed_heartbreak_hill", daysAgo: 4, hour: 7, km: 6.5, run: true },
     ],
   },
   {
@@ -99,6 +105,7 @@ const PEOPLE: DemoPerson[] = [
       { place: "seed_bunker_hill_monument", daysAgo: 6, hour: 9, km: 1.6 },
       { place: "seed_uss_constitution", daysAgo: 4, hour: 11, km: 1.2 },
       { place: "seed_rose_kennedy_greenway", daysAgo: 2, hour: 16, km: 2.5 },
+      { place: "seed_walden_pond", daysAgo: 1, hour: 10, km: 2.7 },
       { place: "seed_boston_common", daysAgo: 0, hour: 9, km: 2.1 },
     ],
   },
@@ -111,6 +118,7 @@ const PEOPLE: DemoPerson[] = [
       { place: "seed_esplanade_hatch_shell", daysAgo: 2, hour: 7, km: 5.5, run: true },
       { place: "seed_newbury_street", daysAgo: 1, hour: 13, km: 1.0 },
       { place: "seed_acorn_street", daysAgo: 0, hour: 11, km: 1.9 },
+      { place: "seed_great_blue_hill", daysAgo: 4, hour: 9, km: 4.2 },
     ],
   },
 ];
@@ -191,7 +199,7 @@ export function buildDemoWorld(places: Place[], now: Date): DemoWorld {
       userId: person.id,
       placeId: place.id,
       routeId: null,
-      photoPath: null,
+      photoPath: demoPhotoFor(place),
       card,
       rarity: card.rarity,
       points: breakdown.total,

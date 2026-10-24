@@ -134,7 +134,14 @@ tests/             # vitest unit tests
 ## Data sources & attribution
 
 - Map tiles and seeded places: © OpenStreetMap contributors (ODbL). Attribution
-  stays visible on the map.
+  stays visible on the map. 66 places: Boston and Cambridge, Boston College and
+  the Marathon route (Heartbreak Hill, the finish line), and statewide stops from
+  Plymouth Rock and Race Point to Walden Pond, Salem, Lowell, Worcester,
+  Springfield, MASS MoCA and Mount Greylock (the only legendary). Coordinates
+  are approximate.
+- Demo stamp photos: original pixel-style illustrations generated in
+  `lib/demo/photos.ts`, plus one real photo of Gasson Hall at Boston College
+  (`public/demo/gasson-hall.jpg`) taken by the team, with no location metadata.
 - County baseline: CDC, *PLACES: Local Data for Better Health, County Data,
   2025 release* (data.cdc.gov dataset `swc5-untb`), Suffolk County, MA, crude
   prevalence among adults. Bundled in `data/cdc-places-suffolk.json`.
