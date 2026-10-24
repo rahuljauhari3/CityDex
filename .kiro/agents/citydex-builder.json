@@ -57,6 +57,10 @@
         "git status.*",
         "git diff.*",
         "git log.*",
+        "git rm .*",
+        "git mv .*",
+        "rm .*\\.tmp",
+        "npm uninstall .*",
         "mkdir .*",
         "ls .*",
         "cat .*"
@@ -99,6 +103,10 @@
           "git status*",
           "git diff*",
           "git log*",
+          "git rm *",
+          "git mv *",
+          "rm *.tmp",
+          "npm uninstall *",
           "mkdir *",
           "ls *",
           "cat *"

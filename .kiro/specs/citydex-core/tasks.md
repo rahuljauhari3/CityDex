@@ -51,25 +51,25 @@ key; build those features behind the demo fallback and continue.
 
 ## M2 — Check-in + photo + AI card
 
-- [ ] 17. Add client photo capture (`capture="environment"`), client-side resize
+- [x] 17. Add client photo capture (`capture="environment"`), client-side resize
   to ≤1280px JPEG ~0.8, and EXIF strip. _(REQ-3.4, REQ-3.5, REQ-14.8)_
-- [ ] 18. Add geofence collect gating (~75 m) and GPS-accuracy guard (>50 m
+- [x] 18. Add geofence collect gating (~75 m) and GPS-accuracy guard (>50 m
   warns/blocks). _(REQ-3.1, REQ-3.2)_
-- [ ] 19. Define `StampCardSchema` (zod) per `design.md` §6. _(REQ-4.7)_
-- [ ] 20. Activate the `claude-vision-card` skill and implement `lib/ai/claude.ts`
+- [x] 19. Define `StampCardSchema` (zod) per `design.md` §6. _(REQ-4.7)_
+- [x] 20. Activate the `claude-vision-card` skill and implement `lib/ai/claude.ts`
   (model, `messages.parse`, `zodOutputFormat`, image-before-text, refusal + null
   guard). _(REQ-4.2, REQ-4.3, REQ-4.4, REQ-4.5, REQ-4.9)_
-- [ ] 21. Implement `lib/ai/mock.ts` deterministic card generator used when no
+- [x] 21. Implement `lib/ai/mock.ts` deterministic card generator used when no
   Anthropic key. _(REQ-4.6)_
-- [ ] 22. Implement `POST /api/stamps` check-in pipeline per `design.md` §7
+- [x] 22. Implement `POST /api/stamps` check-in pipeline per `design.md` §7
   (validate → resolve/create place → AI card → reject/retake handling → store
   photo → persist stamp/route/place). _(REQ-3.3, REQ-4.1, REQ-4.8, REQ-14.4)_
-- [ ] 23. Build the card-reveal animation (parchment, rarity glow, dither photo,
+- [x] 23. Build the card-reveal animation (parchment, rarity glow, dither photo,
   pixel name, italic lore, orange stats), honoring `prefers-reduced-motion` and
   optional pop/vibrate. _(REQ-5.1, REQ-5.4, REQ-5.5)_
-- [ ] 24. Build the Dex 4-column grid with locked "???" silhouettes for
+- [x] 24. Build the Dex 4-column grid with locked "???" silhouettes for
   undiscovered nearby places. _(REQ-5.2, REQ-5.3)_
-- [ ] 25. Verify full collect flow at 375×812 in demo mode; commit `M2: check-in,
+- [x] 25. Verify full collect flow at 375×812 in demo mode; commit `M2: check-in,
   photo capture, AI stamp card, and Dex`.
 
 ## M3 — Health snapshot

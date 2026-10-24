@@ -23,6 +23,7 @@ export const supabaseStore: Store = {
   getPlaces: notImplemented,
   getPlace: notImplemented,
   createPlace: notImplemented,
+  recordCollection: notImplemented,
   createStamp: notImplemented,
   getStampsByUser: notImplemented,
   getDexForUser: notImplemented,

@@ -110,6 +110,18 @@ export const memoryStore: Store = {
     return place;
   },
 
+  async recordCollection(placeId) {
+    ensureSeeded();
+    const place = db.places.get(placeId);
+    if (!place) return null;
+    place.collectCount += 1;
+    if (!place.firstCollectedAt) {
+      place.firstCollectedAt = nowIso();
+    }
+    db.places.set(place.id, place);
+    return place;
+  },
+
   async createStamp(input: CreateStampInput) {
     const stamp: Stamp = {
       id: id("stamp"),

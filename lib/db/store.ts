@@ -31,6 +31,12 @@ export interface Store {
   getPlaces(bbox?: BoundingBox): Promise<Place[]>;
   getPlace(id: string): Promise<Place | null>;
   createPlace(input: CreatePlaceInput): Promise<Place>;
+  /**
+   * Record a collection at a place (design.md §7 step 8): increments
+   * `collectCount` and sets `firstCollectedAt` on the first ever collection.
+   * Returns the updated place. No-op-safe if the id is unknown (returns null).
+   */
+  recordCollection(placeId: string): Promise<Place | null>;
 
   // Stamps / Dex
   createStamp(input: CreateStampInput): Promise<Stamp>;

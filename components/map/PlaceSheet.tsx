@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Place } from "@/lib/db/types";
+import type { Place, Stamp } from "@/lib/db/types";
 import { rarityHex, RARITY_LABEL_HEX } from "./rarity";
+import { CollectFlow } from "@/components/stamp/CollectFlow";
 
 const CATEGORY_LABEL: Record<string, string> = {
   mural: "Mural",
@@ -26,10 +27,18 @@ const CATEGORY_LABEL: Record<string, string> = {
  */
 export function PlaceSheet({
   place,
+  userPos,
+  accuracyM,
+  demoMode,
   onClose,
+  onCollected,
 }: {
   place: Place | null;
+  userPos: { lat: number; lng: number } | null;
+  accuracyM: number | null;
+  demoMode: boolean;
   onClose: () => void;
+  onCollected: (result: { stamp: Stamp; place: Place }) => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -121,15 +130,15 @@ export function PlaceSheet({
           </div>
         </dl>
 
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          title="Check-in arrives in M2"
-          className="mt-4 w-full cursor-not-allowed border-4 border-wood-dark bg-activity/50 px-4 py-3 font-heading text-lg text-parchment"
-        >
-          Collect! (coming in check-in)
-        </button>
+        <div className="mt-4">
+          <CollectFlow
+            place={place}
+            userPos={userPos}
+            accuracyM={accuracyM}
+            demoMode={demoMode}
+            onCollected={onCollected}
+          />
+        </div>
       </div>
     </>
   );

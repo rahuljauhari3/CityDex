@@ -21,10 +21,10 @@ const LeafletMap = dynamic(
   },
 );
 
-export function MapScreen() {
+export function MapScreen({ demoMode }: { demoMode: boolean }) {
   return (
     <section aria-label="City map" className="relative">
-      <LeafletMap />
+      <LeafletMap demoMode={demoMode} />
     </section>
   );
 }

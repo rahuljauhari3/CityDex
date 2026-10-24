@@ -60,6 +60,56 @@ body {
   box-shadow: 4px 4px 0 0 var(--color-wood-dark);
 }
 
+/*
+ * Rarity glow for the stamp-card frame (ui.md "Stamp card"). Glow color is
+ * supplied per-rarity via the `--rarity-glow` custom property set inline on the
+ * element. Pulses a stepped box-shadow so it reads as pixel-art, not a blur.
+ */
+@keyframes rarity-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 var(--rarity-glow, transparent),
+      4px 4px 0 0 var(--color-wood-dark);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px var(--rarity-glow, transparent),
+      4px 4px 0 0 var(--color-wood-dark);
+  }
+}
+
+.rarity-glow {
+  animation: rarity-glow 1.8s ease-in-out infinite;
+}
+
+/* Card-reveal flip-in (ui.md "pop" on reveal). */
+@keyframes card-reveal {
+  0% {
+    transform: perspective(900px) rotateY(90deg) scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: perspective(900px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.card-reveal {
+  animation: card-reveal 0.42s ease-out both;
+}
+
+/* Subtle dither/pixelation feel over stamp photos (ui.md). Decorative only. */
+.stamp-dither {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(91, 58, 41, 0.08) 0,
+    rgba(91, 58, 41, 0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
 /* Respect reduced-motion: disable glow/flip animations (ui.md). */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -68,5 +118,10 @@ body {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+
+  .rarity-glow,
+  .card-reveal {
+    animation: none !important;
   }
 }

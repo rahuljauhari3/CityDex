@@ -1,10 +1,10 @@
-import { PlaceholderScreen } from "@/components/ui/PixelPanel";
+import type { Metadata } from "next";
+import { DexScreen } from "@/components/stamp/DexScreen";
+
+export const metadata: Metadata = {
+  title: "Dex · CityDex",
+};
 
 export default function DexPage() {
-  return (
-    <PlaceholderScreen
-      title="Dex"
-      blurb="Your collection book — a grid of stamps with locked ??? slots — arrives in M2."
-    />
-  );
+  return <DexScreen />;
 }

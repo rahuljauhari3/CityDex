@@ -5,6 +5,10 @@
  * store expose identical shapes. Pure data only — no I/O here.
  */
 
+import type { StampCard } from "@/lib/ai/schema";
+
+export type { StampCard } from "@/lib/ai/schema";
+
 export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 
 export type PlaceCategory =
@@ -105,17 +109,6 @@ export interface HealthSnapshot {
   hrZoneMinutes?: { z1: number; z2: number; z3: number; z4: number; z5: number };
   spo2Avg?: number;
   isDemo: boolean;
-}
-
-export interface StampCard {
-  accepted: boolean;
-  rejectReason: string | null;
-  name: string;
-  category: PlaceCategory;
-  rarity: Rarity;
-  lore: string;
-  tags: string[];
-  colorHex: string;
 }
 
 export interface Stamp {

@@ -59,9 +59,10 @@ function Recenter({ pos }: { pos: [number, number] | null }) {
   return null;
 }
 
-export function LeafletMap() {
+export function LeafletMap({ demoMode }: { demoMode: boolean }) {
   const [places, setPlaces] = useState<Place[]>([]);
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
+  const [accuracyM, setAccuracyM] = useState<number | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Place | null>(null);
 
@@ -99,6 +100,9 @@ export function LeafletMap() {
     const id = navigator.geolocation.watchPosition(
       (p) => {
         setUserPos([p.coords.latitude, p.coords.longitude]);
+        setAccuracyM(
+          typeof p.coords.accuracy === "number" ? p.coords.accuracy : null,
+        );
         setGeoError(null);
       },
       () => setGeoError("Couldn’t get your location. Showing Boston."),
@@ -152,7 +156,22 @@ export function LeafletMap() {
         </div>
       )}
 
-      <PlaceSheet place={selected} onClose={() => setSelected(null)} />
+      <PlaceSheet
+        place={selected}
+        userPos={userPos ? { lat: userPos[0], lng: userPos[1] } : null}
+        accuracyM={accuracyM}
+        demoMode={demoMode}
+        onClose={() => setSelected(null)}
+        onCollected={({ place: updatedPlace }) => {
+          // Reflect the incremented collect count on the map + sheet.
+          setPlaces((prev) =>
+            prev.map((p) => (p.id === updatedPlace.id ? updatedPlace : p)),
+          );
+          setSelected((cur) =>
+            cur && cur.id === updatedPlace.id ? updatedPlace : cur,
+          );
+        }}
+      />
     </div>
   );
 }

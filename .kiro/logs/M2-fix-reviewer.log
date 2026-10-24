@@ -1,0 +1,27 @@
+I'll look at the current state of the agent files to understand what's there before reverting.
+[tool] Reading listing agents
+[tool] status: Completed
+[tool] Reading citydex-reviewer.json:1
+[tool] status: Completed
+I can see the mutating commands in two places: `toolsSettings.shell.allowedCommands` and `permissions.rules`. I'll remove `git rm`, `git mv`, `rm *.tmp`, and `npm uninstall` from both, keeping only the read-only commands.
+[tool] Editing citydex-reviewer.json
+[tool] status: Completed
+[tool] Editing citydex-reviewer.json
+[tool] status: Completed
+Now let me verify the builder and tester still have these commands (they should stay), and check if KIRO_JOURNAL.md exists.
+[tool] status: Failed
+[tool] Searching for 'git rm|git mv|npm uninstall|rm .*tmp' in agents
+[tool] status: Completed
+Builder and tester still have the commands (8 matches each, matching reviewer's original 8). The reviewer is now read-only. KIRO_JOURNAL.md doesn't exist, so I'll create it.
+
+Let me confirm the reviewer file is now clean:
+[tool] Searching for 'git rm|git mv|npm uninstall|rm .*tmp' in citydex-reviewer.json
+[tool] status: Completed
+Reviewer is clean. Now creating the journal note.
+[tool] Creating KIRO_JOURNAL.md
+[tool] status: Completed
+Done. The reviewer is back to read-only.
+
+- Removed `git rm`, `git mv`, `rm *.tmp`, and `npm uninstall` from `.kiro/agents/citydex-reviewer.json` in both `toolsSettings.shell.allowedCommands` and the `permissions` allow rule. The reviewer now only permits `git diff`, `git log`, `git status`, `ls`, and `cat`.
+- Confirmed the mutating commands remain on `citydex-builder` and `citydex-tester` (8 matches each, untouched).
+- Created `KIRO_JOURNAL.md` with a note describing the revert and rationale.

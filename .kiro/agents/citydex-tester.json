@@ -25,6 +25,10 @@
         "npx vitest.*",
         "npx tsc.*",
         "node .*",
+        "git rm .*",
+        "git mv .*",
+        "rm .*\\.tmp",
+        "npm uninstall .*",
         "ls .*",
         "cat .*"
       ],
@@ -56,6 +60,10 @@
           "npx vitest*",
           "npx tsc*",
           "node *",
+          "git rm *",
+          "git mv *",
+          "rm *.tmp",
+          "npm uninstall *",
           "ls *",
           "cat *"
         ],

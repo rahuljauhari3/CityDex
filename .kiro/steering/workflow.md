@@ -49,3 +49,20 @@ milestone.
 - After UI milestones, test at 375×812 and check the browser console.
 - Write focused tests for pure logic as the matching milestone lands; delegate
   test writing to `citydex-tester` and code review to `citydex-reviewer`.
+
+## Shell command rules (non-interactive permissions)
+
+- Run **every shell command on its own** — exactly one command per tool call.
+- **Never** chain commands with `&&`, `||`, `;`, pipes (`|`), redirects
+  (`>`, `>>`, `<`), or subshells (`$(...)`, backticks). The agent permission
+  allow-list only matches **single** commands; chained commands fall outside
+  those patterns and are **denied** in headless (non-interactive) runs.
+- Examples of **allowed** calls (each as its own tool call):
+  - `npx tsc --noEmit`
+  - `npm run lint`
+  - `npm test`
+  - `npm run build`
+  - `git add -A`
+  - `git commit -m "M2: ..."`
+- So the pre-commit gate (lint → tsc --noEmit → test) is **three separate
+  tool calls**, not one chained command.

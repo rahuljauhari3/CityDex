@@ -1,0 +1,54 @@
+I'll start by reading the relevant files to understand the current state before making changes.
+[tool] Reading workflow.md:1, listing .kiro
+[tool] status: Completed
+The journal is at `.kiro/logs/KIRO_JOURNAL.md`. Let me read the three agent configs and the journal to understand their structure.
+[tool] Reading citydex-builder.json:1, citydex-tester.json:1, citydex-reviewer.json:1, KIRO_JOURNAL.md:1
+[tool] status: Completed
+Now I have everything I need. Let me make the three edits: append to workflow.md, add the four commands to each of the three agents (both `toolsSettings.shell.allowedCommands` and `permissions.rules` shell allow match), and append a journal note.
+
+First, the workflow.md section:
+[tool] Editing workflow.md
+[tool] status: Completed
+Now the agent configs. For each agent I need to add the four commands (`git rm *`, `git mv *`, `rm *.tmp`, `npm uninstall *`) to both `toolsSettings.shell.allowedCommands` and `permissions.rules` shell allow `match` arrays.
+
+Note the format differences: `toolsSettings.shell.allowedCommands` uses regex-style patterns (`.*`), while `permissions.rules` match uses glob-style (`*`). The user gave literal command examples, so I'll adapt each to the surrounding style — glob form for both since the user specified `git rm *` etc. Looking at the existing entries, `allowedCommands` uses `.*` regex but the deny list has `curl .*\| *sh.*`, while permissions.rules uses `*`. I'll match each array's existing convention: regex-style in `allowedCommands`, glob-style in `permissions.rules`.
+
+Let me start with the builder:
+[tool] Editing citydex-builder.json
+[tool] status: Completed
+[tool] Editing citydex-builder.json
+[tool] status: Completed
+Now the tester:
+[tool] Editing citydex-tester.json
+[tool] status: Completed
+[tool] Editing citydex-tester.json
+[tool] status: Completed
+Now the reviewer:
+[tool] Editing citydex-reviewer.json
+[tool] status: Completed
+[tool] Editing citydex-reviewer.json
+[tool] status: Completed
+I should note that the reviewer is described as "read-only" and these new commands (`git rm`, `rm *.tmp`, `npm uninstall`) are mutating. That's a behavioral consideration, but the user explicitly asked to add them to all three agents including the reviewer, so I'll follow the instruction and flag it in the summary.
+
+Now the journal note:
+[tool] Editing KIRO_JOURNAL.md
+[tool] status: Completed
+All edits are done. Let me verify the three JSON files are still valid by reading the key regions.
+[tool] Searching for 'git rm|git mv|rm \*\.tmp|rm \.\*\\\.tmp|npm uninstall' in agents
+[tool] status: Completed
+Each of the three agents has 7 matches (the 4 commands, with `git rm`/`git mv` appearing in both the allowedCommands and permissions arrays plus the `rm *.tmp`/`npm uninstall` entries). Let me do a quick validity sanity check by reading one edited block from the builder to confirm JSON structure is intact.
+[tool] Searching for 'git rm|git mv|rm .*tmp|npm uninstall' in citydex-builder.json
+[tool] status: Completed
+All changes are in place and the JSON structure looks correct (regex form `rm .*\\.tmp` in `allowedCommands`, glob form `rm *.tmp` in `permissions.rules`).
+
+Summary of what I did, all within the repo:
+
+1. workflow.md — appended a "Shell command rules (non-interactive permissions)" section: one command per tool call, never chain with `&&`/`||`/`;`/pipes/redirects/subshells (the allow-list only matches single commands in headless runs), with the allowed examples and the note that the pre-commit gate runs as three separate calls.
+
+2. Three agent configs (`citydex-builder`, `citydex-tester`, `citydex-reviewer`) — added `git rm`, `git mv`, `rm *.tmp`, `npm uninstall` to both `toolsSettings.shell.allowedCommands` (regex form, e.g. `git rm .*`, `rm .*\.tmp`) and `permissions.rules` shell allow `match` (glob form, e.g. `git rm *`, `rm *.tmp`), matching each array's existing convention.
+
+3. KIRO_JOURNAL.md — appended a lesson note capturing the single-command rule rationale and the allow-list expansion.
+
+One thing worth flagging: `citydex-reviewer` is described and prompted as a read-only agent, but these four commands (`git rm`, `rm *.tmp`, `npm uninstall`, and `git mv`) are mutating. I added them as requested and noted the caveat in the journal, but if you want the reviewer to stay strictly read-only, I can revert that file's two arrays.
+
+I did not run lint/tsc/test since these are config and docs changes with no code impact, and I did not commit — let me know if you'd like me to stage and commit these.
