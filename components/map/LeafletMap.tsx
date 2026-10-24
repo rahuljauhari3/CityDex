@@ -76,10 +76,12 @@ export function LeafletMap({
   demoMode,
   focusPlaceId,
   questIds,
+  questReasons,
 }: {
   demoMode: boolean;
   focusPlaceId?: string | null;
   questIds: string[];
+  questReasons: Record<string, string>;
 }) {
   const [places, setPlaces] = useState<Place[]>([]);
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
@@ -239,6 +241,16 @@ export function LeafletMap({
 
       <PlaceSheet
         place={selected}
+        questReason={selected ? questReasons[selected.id] ?? null : null}
+        onDemoWalk={
+          demoMode && !tracker.active && !gpsPos && selected
+            ? () => {
+                tracker.simulate({ lat: selected.lat, lng: selected.lng }, selected.name);
+                setSelected(null);
+                setGeoError(null);
+              }
+            : null
+        }
         userPos={pos}
         accuracyM={tracker.simulated ? 5 : accuracyM}
         demoMode={demoMode}

@@ -22,17 +22,19 @@ export function MapScreen({
   header,
   focusPlaceId,
   questIds,
+  questReasons,
 }: {
   demoMode: boolean;
   header: ReactNode;
   focusPlaceId: string | null;
   questIds: string[];
+  questReasons: Record<string, string>;
 }) {
   return (
     <section aria-label="City map" className="flex h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] flex-col">
       {header}
       <div className="relative min-h-0 flex-1">
-        <LeafletMap demoMode={demoMode} focusPlaceId={focusPlaceId} questIds={questIds} />
+        <LeafletMap demoMode={demoMode} focusPlaceId={focusPlaceId} questIds={questIds} questReasons={questReasons} />
       </div>
     </section>
   );

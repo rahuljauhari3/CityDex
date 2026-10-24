@@ -7,7 +7,7 @@ const KEY = "citydex.route";
 const MAX_ACCURACY_M = 50;
 /** Demo simulation: brisk walking pace, played back faster than real time. */
 const WALK_MPS = 1.4;
-export const SIM_SPEEDUP = 12;
+export const SIM_SPEEDUP = 20;
 const ARRIVE_M = 30;
 
 interface TrackedRoute {

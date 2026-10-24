@@ -29,6 +29,19 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
       <div className="mt-1.5 border-2 border-wood-dark bg-parchment px-2 py-1.5">
         <GoalBars progress={today.progress} compact />
       </div>
+      {quests[0] && (
+        <Link
+          href={`/map?place=${quests[0].place.id}`}
+          className="mt-1.5 flex items-center gap-2 border-2 border-wood-dark bg-parchment px-2 py-1"
+        >
+          <span aria-hidden="true" className="font-heading text-activity">★</span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-heading text-sm leading-tight text-wood-dark">Quest: {quests[0].place.name}</span>
+            <span className="block truncate text-xs text-activity">{quests[0].reason}</span>
+          </span>
+          <span className="font-label text-[10px] uppercase text-wood-dark/75">{(quests[0].distanceM / 1000).toFixed(1)} km</span>
+        </Link>
+      )}
       {!viewer.onboardedAt && (
         <Link href="/onboarding" className="mt-1.5 block border-2 border-wood-dark bg-activity px-2 py-1 text-center font-heading text-sm text-parchment">
           Set your health goals →
@@ -43,6 +56,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
       header={header}
       focusPlaceId={place ?? null}
       questIds={quests.map((q) => q.place.id)}
+      questReasons={Object.fromEntries(quests.map((q) => [q.place.id, q.reason]))}
     />
   );
 }

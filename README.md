@@ -44,6 +44,11 @@ Demo mode is on unless you set `DEMO_MODE=false` *and* configure Supabase.
 
 Real keys switch on the real integrations; their absence never breaks the demo.
 
+## Demo
+
+The 2-minute presenter script, with timings and fallbacks, is in [`DEMO.md`](./DEMO.md).
+Use **Profile → Reset demo data** before presenting.
+
 ## Getting started
 
 Requirements: Node.js 20+ and npm.
@@ -93,7 +98,7 @@ Before every commit, run in order and fix failures: `npm run lint` →
 
 | Feature | Where | Notes |
 |---|---|---|
-| Live walk tracking | Map | time, distance, est. steps, pace, est. kcal and live HR (demo watch) while you walk; path drawn on the map and kept on the device. In demo mode without GPS, "Demo walk to quest" simulates the walk at ×12 (labeled DEMO; the server refuses simulated walks outside demo mode) |
+| Live walk tracking | Map | time, distance, est. steps, pace, est. kcal and live HR (demo watch) while you walk; path drawn on the map and kept on the device. In demo mode without GPS, "Demo walk to quest" simulates the walk at ×20 (labeled DEMO; the server refuses simulated walks outside demo mode) |
 | Health snapshot per check-in | card reveal, Feed, Dex | steps, avg/max HR, HR zones, active kcal, SpO₂, duration, pace; every value labeled with its source (DEMO, Strava, Apple, est.). The reveal also shows what the walk added to each daily goal and how it compares with your usual walk or earlier visits here |
 | Dex stamp details | Dex | tap a stamp: photo, totals for the place, the HR-trend insight, the latest snapshot and every visit |
 | Goals + progress bars | onboarding, Map header, Quests | steps, active kcal, zone-2+ cardio minutes, new places/week, green & quiet places/week |
@@ -107,7 +112,8 @@ Before every commit, run in order and fix failures: `npm run lint` →
 | Health sources | Profile | Demo watch, Apple Health `export.xml` upload (streamed parser), Strava OAuth; WHOOP/Fitbit need keys; Garmin/Samsung "coming soon" with the reason |
 | Points + badges | card reveal, Profile | rarity base + first finder + movement + effort, ×1.5 for quests; 13 rule-based badges, 6 of them health badges |
 | Leaderboards | Feed → Leaderboard | friends/global × week/all time × steps/points/stamps, rank-change arrows, no location |
-| Friends + feed | Feed | add by username or invite code, accept requests, high fives |
+| Friends + feed | Feed | add by username or invite code, accept requests, high fives on stamps and health milestones |
+| Weekly challenges | Feed | "This week with friends": group marathon-steps goal, 150 Club (150 cardio minutes each), green breaks; health milestones (health badges, 10K days, 150-minute weeks, fitness gains at a place) |
 | Privacy | everywhere | consent screen, "not medical advice" footer, EXIF stripped, coords rounded to ~10 m, walk paths stay on device, disconnect deletes tokens, account deletion |
 
 ## Project layout

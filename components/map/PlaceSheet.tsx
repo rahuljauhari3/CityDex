@@ -27,6 +27,8 @@ const CATEGORY_LABEL: Record<string, string> = {
  */
 export function PlaceSheet({
   place,
+  questReason,
+  onDemoWalk,
   userPos,
   accuracyM,
   demoMode,
@@ -36,6 +38,8 @@ export function PlaceSheet({
   onCollected,
 }: {
   place: Place | null;
+  questReason: string | null;
+  onDemoWalk: (() => void) | null;
   userPos: { lat: number; lng: number } | null;
   accuracyM: number | null;
   demoMode: boolean;
@@ -133,6 +137,22 @@ export function PlaceSheet({
             </dd>
           </div>
         </dl>
+
+        {questReason && (
+          <p className="mt-3 border-l-4 border-activity pl-2 font-heading text-base text-activity">
+            ★ Today&apos;s quest: {questReason}
+          </p>
+        )}
+
+        {onDemoWalk && (
+          <button
+            type="button"
+            onClick={onDemoWalk}
+            className="mt-3 w-full border-4 border-wood-dark bg-grass py-2 font-heading text-base text-wood-dark"
+          >
+            ▶ Demo walk here (tracks health live)
+          </button>
+        )}
 
         <div className="mt-4">
           <CollectFlow

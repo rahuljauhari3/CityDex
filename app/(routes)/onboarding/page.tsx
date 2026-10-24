@@ -5,6 +5,7 @@ import type { GoalType } from "@/lib/db/types";
 import { DEMO_USER_ID } from "@/lib/demo-user";
 import { DEFAULT_GOALS } from "@/lib/health/summary";
 import { getViewer } from "@/lib/app/views";
+import { hasStrava } from "@/lib/config";
 
 export const metadata: Metadata = { title: "Get started · CityDex" };
 export const dynamic = "force-dynamic";
@@ -35,6 +36,8 @@ export default async function OnboardingPage() {
         initial={initial}
         initialAge={viewer.age}
         demoConnected={conns.some((c) => c.provider === "demo")}
+        hasStrava={hasStrava}
+        stravaConnected={conns.some((c) => c.provider === "strava")}
       />
     </div>
   );

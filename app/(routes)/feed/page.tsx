@@ -196,7 +196,7 @@ async function Leaderboard({
         ))}
       </ol>
       <p className="mt-2 text-center text-xs text-parchment">
-        Weekly board resets Monday 00:00 Boston time. No locations, ever. Steps include DEMO data.
+        Weekly board resets Monday 00:00 Boston time. No locations, ever.{metric === "steps" ? " Steps include DEMO data." : ""}
       </p>
     </div>
   );

@@ -37,7 +37,7 @@ import { computePoints } from "@/lib/points/compute";
 import { BADGES, evaluateBadges } from "@/lib/badges/rules";
 import { zone2Plus } from "@/lib/health/zones";
 import { checkinSnapshot, dailyFor } from "@/lib/app/health";
-import { getQuests, getToday } from "@/lib/app/views";
+import { friendIdsOf, getQuests, getToday } from "@/lib/app/views";
 import { compareToUsual, goalImpact, paceMinPerKm } from "@/lib/health/checkin";
 import { computePlaceInsight } from "@/lib/insights/place";
 import { addDays, nyDate } from "@/lib/time";
@@ -252,6 +252,13 @@ export async function POST(request: Request): Promise<Response> {
       const def = BADGES.find((b) => b.slug === slug);
       if (def) newBadges.push({ slug, name: def.name, icon: def.icon, description: def.description });
     }
+  }
+
+  // Demo mode: a couple of demo friends high-five the new stamp, so the
+  // social loop shows up during a live demo.
+  if (isDemoMode) {
+    const friends = [...(await friendIdsOf(DEMO_USER_ID))].filter((id) => id.startsWith("demo_")).slice(0, 2);
+    for (const fid of friends) await store.toggleKudos(stamp.id, fid);
   }
 
   // Health context for the reveal: goal impact and how this compares.

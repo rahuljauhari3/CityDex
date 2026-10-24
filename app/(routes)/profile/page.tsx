@@ -8,6 +8,8 @@ import { HealthStoryCard, RecoveryCard, TrendsCard } from "@/components/health/S
 import { CdcBaselineCard } from "@/components/health/CdcBaselineCard";
 import { HealthSources } from "@/components/health/HealthSources";
 import { DeleteAccount } from "@/components/ui/DeleteAccount";
+import { DemoReset } from "@/components/ui/DemoReset";
+import { isDemoMode } from "@/lib/config";
 import { DEMO_USER_ID } from "@/lib/demo-user";
 import { getStore } from "@/lib/db";
 import { getBadges, getCdcBaseline, getConnectionsView, getHealthStory, getViewer } from "@/lib/app/views";
@@ -94,6 +96,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           <Link href="/onboarding" className="underline">review</Link>
         </p>
         <DeleteAccount />
+        {isDemoMode && <DemoReset />}
       </PixelPanel>
 
       <NotMedicalAdvice />

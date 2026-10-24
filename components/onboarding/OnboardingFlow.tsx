@@ -20,10 +20,14 @@ export function OnboardingFlow({
   initial,
   initialAge,
   demoConnected,
+  hasStrava,
+  stravaConnected,
 }: {
   initial: GoalState;
   initialAge: number | null;
   demoConnected: boolean;
+  hasStrava: boolean;
+  stravaConnected: boolean;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -118,7 +122,18 @@ export function OnboardingFlow({
             </span>
           </label>
           <ul className="mt-3 space-y-1 text-sm text-wood-dark/90">
-            <li>• <strong>Strava</strong>: connect with Strava OAuth from your Profile.</li>
+            <li className="flex items-center justify-between gap-2">
+              <span>• <strong>Strava</strong>: distance, heart rate and calories from your activities.</span>
+              {stravaConnected ? (
+                <span className="font-label text-[10px] uppercase text-grass">● connected</span>
+              ) : hasStrava ? (
+                <a href="/api/health/strava/connect" className="shrink-0 border-2 border-wood-dark bg-activity px-2 py-0.5 font-label text-[10px] uppercase text-parchment">
+                  Connect
+                </a>
+              ) : (
+                <span className="shrink-0 font-label text-[10px] uppercase text-wood-dark/70">Needs keys</span>
+              )}
+            </li>
             <li>• <strong>Apple Health</strong>: no web API, so upload your export.xml on your Profile.</li>
             <li>• <strong>WHOOP / Fitbit</strong>: OAuth, planned.</li>
             <li>• <strong>Garmin / Samsung</strong>: coming soon (business approval / Android-only SDK).</li>
