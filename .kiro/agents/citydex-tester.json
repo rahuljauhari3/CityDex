@@ -2,8 +2,18 @@
   "name": "citydex-tester",
   "description": "Writes and runs vitest unit tests for CityDex pure logic: points formula, badge rules, recommendation scoring, haversine/geofence, and the Apple Health XML parser. Restricted to the tests directory and vitest config.",
   "prompt": "You write and run focused vitest unit tests for CityDex pure logic only: points formula (lib/points), badge rules (lib/badges), recommendation scoring (lib/recs), haversine/geofence (lib/geo), and the Apple Health export XML parser (lib/health). Cover representative and edge cases (caps, multipliers, first-discoverer, zone minutes, geofence boundary ~75 m, malformed XML). Keep tests deterministic and I/O-free. Run `npm test` and report pass/fail with specifics. Do not modify application code; if logic looks wrong, report it rather than editing it.",
-  "tools": ["read", "grep", "glob", "write", "shell"],
-  "allowedTools": ["read", "grep", "glob"],
+  "tools": [
+    "glob",
+    "grep",
+    "read",
+    "shell",
+    "write"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob"
+  ],
   "resources": [
     "file://.kiro/steering/**/*.md",
     "file://PLAN.md"
@@ -27,8 +37,70 @@
       ]
     },
     "write": {
-      "allowedPaths": ["tests/**", "vitest.config.*"],
-      "deniedPaths": [".env.local", "~/**"]
+      "allowedPaths": [
+        "tests/**",
+        "vitest.config.*"
+      ],
+      "deniedPaths": [
+        ".env.local",
+        "~/**"
+      ]
     }
+  },
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": [
+          "npm *",
+          "npx vitest*",
+          "npx tsc*",
+          "node *",
+          "ls *",
+          "cat *"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "rm -rf /*",
+          "sudo *",
+          "vercel*",
+          "curl * | sh*"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          "tests/**",
+          "vitest.config.*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".env.local",
+          "~/**"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:74b83e6b2524ab0cd86c00d007f8e6df3317f1cb2434f9b9e98c2014134eb869",
+    "source": "sha256:bda8583e1ddd4184ed4fef50ce533f0d21c8e852282310cce399d2ebcf788062"
   }
 }

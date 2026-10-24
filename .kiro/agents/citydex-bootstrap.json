@@ -2,13 +2,69 @@
   "name": "citydex-bootstrap",
   "description": "Bootstrap agent: creates Kiro workspace config (steering, agents, skills, prompts) for CityDex. File tools only, scoped to the project.",
   "prompt": "You configure the Kiro workspace for the CityDex project. Only write inside this repository.",
-  "tools": ["read", "write", "grep", "glob"],
-  "allowedTools": ["read", "write", "grep", "glob"],
+  "tools": [
+    "glob",
+    "grep",
+    "read",
+    "write"
+  ],
+  "allowedTools": [
+    "read",
+    "write",
+    "grep",
+    "glob"
+  ],
   "toolsSettings": {
     "write": {
-      "allowedPaths": ["/Users/raj/coding/CityDex/**", "./**"],
-      "deniedPaths": [".env.local", ".git/**"]
+      "allowedPaths": [
+        "/Users/raj/coding/CityDex/**",
+        "./**"
+      ],
+      "deniedPaths": [
+        ".env.local",
+        ".git/**"
+      ]
     }
   },
-  "resources": ["file://PLAN.md", "file://AGENT_PROMPT.md"]
+  "resources": [
+    "file://PLAN.md",
+    "file://AGENT_PROMPT.md"
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "fs_write",
+        "match": [
+          "/Users/raj/coding/CityDex/**",
+          "./**"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".env.local",
+          ".git/**"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:7e18dc3750fe3d048c0c0fa1b362a39229ea60013f4a5a54df1ef792a2b90c28",
+    "source": "sha256:83d18dd7f18f8f9b34301229f2e0df1ef89657208317255094f482946d3ff3ac"
+  }
 }

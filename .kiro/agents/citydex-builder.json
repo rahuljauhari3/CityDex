@@ -2,32 +2,50 @@
   "name": "citydex-builder",
   "description": "Full-stack implementer for CityDex. Builds milestones M0-M8 in order following the steering files, delegates tests to citydex-tester and review to citydex-reviewer. Works only inside this repository.",
   "prompt": "You are the CityDex full-stack implementer. Build milestones M0 through M8 strictly in order, each ending in a running app, following every steering file (product, tech, structure, privacy, ui, workflow). PLAN.md is the source of truth. Demo mode (DEMO_MODE=true, no keys) must always work. For Claude API code use the claude-vision-card skill; never guess SDK shapes. Before each commit run lint, tsc --noEmit, and tests, and fix failures. Commit after each milestone as 'M<n>: <summary>' with NO Co-Authored-By trailer. Never push, never create external accounts; ask the human for keys and continue behind the demo fallback. Delegate unit tests to citydex-tester and code review to citydex-reviewer.",
-  "tools": ["*"],
-  "allowedTools": ["read", "grep", "glob", "write"],
+  "tools": [
+    "*"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob",
+    "write"
+  ],
   "resources": [
     "file://.kiro/steering/**/*.md",
     "file://PLAN.md",
     "skill://.kiro/skills/**/SKILL.md"
   ],
-  "hooks": {
-    "agentSpawn": [
-      {
+  "hooks": [
+    {
+      "name": "agentSpawn-0",
+      "trigger": "agentSpawn",
+      "action": {
+        "type": "command",
         "command": "git status --short && git log --oneline -5"
-      }
-    ],
-    "postToolUse": [
-      {
-        "matcher": "write",
-        "command": "[ -f package.json ] && npx tsc --noEmit -p . 2>&1 | tail -20 || true",
-        "timeout_ms": 90000
-      }
-    ],
-    "stop": [
-      {
+      },
+      "timeout": 10
+    },
+    {
+      "name": "postToolUse-0",
+      "trigger": "postToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "[ -f package.json ] && npx tsc --noEmit -p . 2>&1 | tail -20 || true"
+      },
+      "timeout": 90
+    },
+    {
+      "name": "stop-0",
+      "trigger": "stop",
+      "action": {
+        "type": "command",
         "command": "[ -f package.json ] && npm run lint --silent 2>&1 | tail -15 || true"
-      }
-    ]
-  },
+      },
+      "timeout": 10
+    }
+  ],
   "toolsSettings": {
     "shell": {
       "allowedCommands": [
@@ -52,11 +70,86 @@
       ]
     },
     "write": {
-      "deniedPaths": [".env.local", "~/**"]
+      "deniedPaths": [
+        ".env.local",
+        "~/**"
+      ]
     },
     "crew": {
-      "availableAgents": ["citydex-*"],
-      "trustedAgents": ["citydex-tester", "citydex-reviewer", "citydex-ui"]
+      "availableAgents": [
+        "citydex-*"
+      ],
+      "trustedAgents": [
+        "citydex-tester",
+        "citydex-reviewer",
+        "citydex-ui"
+      ]
     }
+  },
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": [
+          "npm *",
+          "npx *",
+          "node *",
+          "git add *",
+          "git commit *",
+          "git status*",
+          "git diff*",
+          "git log*",
+          "mkdir *",
+          "ls *",
+          "cat *"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "rm -rf /*",
+          "sudo *",
+          "vercel*",
+          "curl * | sh*"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".env.local",
+          "~/**"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "subagent",
+        "match": [
+          "citydex-reviewer",
+          "citydex-tester",
+          "citydex-ui"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:3b4f7648bffba46eb6982b39b40db6c4e10c82f53db541500b34a278ed6e3e83",
+    "source": "sha256:978f8a9b93039a2de15600d2dcb945b63c1bd9b68bcf23b24f12935e13dbd230"
   }
 }

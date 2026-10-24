@@ -45,3 +45,11 @@ as trusted) to keep test-writing and review separate from implementation.
 - Knowledge bases — not needed; steering + PLAN.md cover shared context.
 - MCP — no external MCP servers configured; all integrations go through the
   provider adapters in PLAN §4.
+
+## Agent format upgrade (universal v2+v3)
+Upgraded the four agents to the universal v2+v3 format with
+`kiro-cli agent upgrade`. The conversion of the old `curl .*\| *sh.*`
+denied-command regex left a bare `"*"` in each shell deny rule's `match` array,
+which denied ALL shell commands. Fixed by replacing that bare `"*"` with
+`"curl * | sh*"` in `citydex-builder`, `citydex-reviewer`, `citydex-tester`,
+and `citydex-ui`. The builder's `"tools": ["*"]` array was left unchanged.

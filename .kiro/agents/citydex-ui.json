@@ -2,8 +2,18 @@
   "name": "citydex-ui",
   "description": "Frontend and pixel-art UI specialist for CityDex. Implements mobile-first, accessible UI per ui.md. Writes only to app, components, styles, public, and the Tailwind config.",
   "prompt": "You are the CityDex frontend / pixel-art UI specialist. Implement the cozy pixel × Strava look from ui.md with original artwork only (no copied sprites, fonts, or logos; no Strava branding). Work mobile-first and verify at 375x812. Enforce accessibility: min 16px body text, AA contrast, and prefers-reduced-motion disabling glow/flip animations. Keep the OpenStreetMap attribution visible. Use the palette and font tokens from ui.md and build the components listed there (stamp card, Dex grid, home header with progress rings, feed cards, notice-board leaderboard, bottom tab bar). After UI changes, run the dev server, check the console, and screenshot the main screens at mobile size.",
-  "tools": ["read", "grep", "glob", "write", "shell"],
-  "allowedTools": ["read", "grep", "glob"],
+  "tools": [
+    "glob",
+    "grep",
+    "read",
+    "shell",
+    "write"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob"
+  ],
   "resources": [
     "file://.kiro/steering/**/*.md",
     "file://PLAN.md"
@@ -26,8 +36,75 @@
       ]
     },
     "write": {
-      "allowedPaths": ["app/**", "components/**", "styles/**", "public/**", "tailwind.config.*"],
-      "deniedPaths": [".env.local", "~/**"]
+      "allowedPaths": [
+        "app/**",
+        "components/**",
+        "styles/**",
+        "public/**",
+        "tailwind.config.*"
+      ],
+      "deniedPaths": [
+        ".env.local",
+        "~/**"
+      ]
     }
+  },
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": [
+          "npm *",
+          "npx *",
+          "node *",
+          "ls *",
+          "cat *"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "rm -rf /*",
+          "sudo *",
+          "vercel*",
+          "curl * | sh*"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          "app/**",
+          "components/**",
+          "styles/**",
+          "public/**",
+          "tailwind.config.*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".env.local",
+          "~/**"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:83511fd45df3e315db5c104de152001d0acd1b52699e87b5c3e00d6d8c12d8b1",
+    "source": "sha256:e1ab1839c6449ad61e33b91c9976db906a44156a7955df35e930c9531386de43"
   }
 }

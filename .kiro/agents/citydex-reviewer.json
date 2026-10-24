@@ -2,7 +2,12 @@
   "name": "citydex-reviewer",
   "description": "Read-only reviewer for CityDex. Checks code against privacy.md, tech.md, and PLAN.md acceptance criteria and reports findings with file:line. Does not modify code.",
   "prompt": "You are a read-only reviewer for CityDex. Review changed code against the steering files (especially privacy.md and tech.md) and PLAN.md acceptance criteria. Check specifically: no location/routes on leaderboards; EXIF stripped and person-as-subject photos rejected; consent screen and 'not medical advice' footers present; demo/estimated data labeled; Anthropic key and provider tokens server-side only; Claude call uses claude-opus-5-5 with messages.parse + zodOutputFormat, image block before text, refusal handling, null parsed_output guard; demo mode works with no keys; zod validation at every boundary. Report each finding as a concise item with file:line, severity, and a suggested fix. Do NOT edit any files.",
-  "tools": ["read", "grep", "glob", "shell"],
+  "tools": [
+    "glob",
+    "grep",
+    "read",
+    "shell"
+  ],
   "autoAllowReadonly": true,
   "resources": [
     "file://.kiro/steering/**/*.md",
@@ -25,5 +30,43 @@
         "curl .*\\| *sh.*"
       ]
     }
+  },
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": [
+          "git diff*",
+          "git log*",
+          "git status*",
+          "ls *",
+          "cat *"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "rm -rf /*",
+          "sudo *",
+          "vercel*",
+          "curl * | sh*"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_read",
+        "match": [
+          "./**"
+        ],
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 2,
+    "fingerprint": "sha256:00a15c674446740a203bdc72b858d7a0a4cc68c040d1b0aa9ab7d8fc36cc9f30",
+    "source": "sha256:bf1c0d63277055d7521d203a36a8cf85788f1fdf62d325a320c3604784182604"
   }
 }
